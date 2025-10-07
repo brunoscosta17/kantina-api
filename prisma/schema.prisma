@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GESTOR
+  OPERADOR
+  RESPONSAVEL
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  // back-relations (ADICIONADAS) ↓↓↓
+  users      User[]
+  students   Student[]
+  categories Category[]
+  items      CatalogItem[]
+  wallets    Wallet[] // <— ADICIONADO
+  txs        WalletTransaction[] // <— ADICIONADO (nome do campo livre)
+  orders     Order[] // <— ADICIONADO
+}
+
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String
+  email     String
+  password  String
+  role      Role     @default(RESPONSAVEL)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email])
+}
+
+model Student {
+  id        String  @id @default(uuid())
+  tenantId  String
+  name      String
+  classroom String?
+  tenant    Tenant  @relation(fields: [tenantId], references: [id])
+  wallet    Wallet?
+  orders    Order[]
+
+  @@index([tenantId])
+}
+
+model Wallet {
+  id           String              @id @default(uuid())
+  tenantId     String
+  studentId    String              @unique
+  balanceCents Int                 @default(0)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  student      Student             @relation(fields: [studentId], references: [id])
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  tenantId    String
+  type        String // "TOPUP" | "DEBIT" | "REFUND"
+  amountCents Int
+  meta        Json?
+  createdAt   DateTime @default(now())
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model Category {
+  id        String        @id @default(uuid())
+  tenantId  String
+  name      String
+  sortOrder Int           @default(0)
+  tenant    Tenant        @relation(fields: [tenantId], references: [id])
+  items     CatalogItem[]
+
+  @@unique([tenantId, name])
+}
+
+model CatalogItem {
+  id         String   @id @default(uuid())
+  tenantId   String
+  categoryId String
+  name       String
+  priceCents Int
+  imageUrl   String?
+  isActive   Boolean  @default(true)
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // back-relation para OrderItem (ADICIONADO)
+  orderItems OrderItem[]
+
+  @@index([tenantId, categoryId])
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  tenantId  String
+  studentId String
+  status    String      @default("CREATED") // CREATED|PAID|FULFILLED|CANCELLED
+  createdAt DateTime    @default(now())
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  student   Student     @relation(fields: [studentId], references: [id])
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id             String      @id @default(uuid())
+  orderId        String
+  itemId         String
+  qty            Int
+  unitPriceCents Int
+  order          Order       @relation(fields: [orderId], references: [id])
+  item           CatalogItem @relation(fields: [itemId], references: [id])
+}
