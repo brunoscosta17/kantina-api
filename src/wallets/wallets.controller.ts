@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { TopupDto } from './dto/topup.dto';
 import { WalletsService } from './wallets.service';
 
@@ -14,6 +16,8 @@ export class WalletsController {
   }
 
   @Post(':studentId/topup')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'GESTOR', 'OPERADOR')
   topup(@Param('studentId') studentId: string, @Body() dto: TopupDto, @Req() req: any) {
     return this.svc.topup(req.tenantId, studentId, dto.amountCents, dto.note);
   }
