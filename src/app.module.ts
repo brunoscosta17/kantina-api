@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma.module';
 import { ReportsModule } from './reports/reports.module';
 import { TenantMiddleware } from './tenant.middleware';
 import { WalletsModule } from './wallets/wallets.module';
+import { CategoriesService } from './categories/categories.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { WalletsModule } from './wallets/wallets.module';
     ReportsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, CategoriesService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
