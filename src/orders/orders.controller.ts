@@ -1,0 +1,30 @@
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateOrderDto, ListOrdersQueryDto } from './dto/create-order.dto';
+import { OrdersService } from './orders.service';
+
+@Controller('orders')
+@UseGuards(JwtAuthGuard)
+export class OrdersController {
+  constructor(private readonly svc: OrdersService) {}
+
+  @Get()
+  list(@Req() req: any, @Query() q: ListOrdersQueryDto) {
+    return this.svc.list(req.tenantId, q);
+  }
+
+  @Post()
+  create(@Req() req: any, @Body() dto: CreateOrderDto) {
+    return this.svc.create(req.tenantId, dto);
+  }
+
+  @Post(':id/fulfill')
+  fulfill(@Req() req: any, @Param('id') id: string) {
+    return this.svc.fulfill(req.tenantId, id);
+  }
+
+  @Post(':id/cancel')
+  cancel(@Req() req: any, @Param('id') id: string) {
+    return this.svc.cancel(req.tenantId, id);
+  }
+}
