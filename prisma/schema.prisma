@@ -75,7 +75,8 @@ model WalletTransaction {
   wallet      Wallet   @relation(fields: [walletId], references: [id])
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
 
-  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, type, createdAt])
 }
 
 model Category {
@@ -115,6 +116,9 @@ model Order {
   tenant    Tenant      @relation(fields: [tenantId], references: [id])
   student   Student     @relation(fields: [studentId], references: [id])
   items     OrderItem[]
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, studentId, createdAt])
 }
 
 model OrderItem {
