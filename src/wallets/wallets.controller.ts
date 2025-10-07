@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { TopupDto } from './dto/topup.dto';
 import { WalletsService } from './wallets.service';
 
 @Controller('wallets')
@@ -10,5 +11,10 @@ export class WalletsController {
   @Get(':studentId')
   get(@Param('studentId') studentId: string, @Req() req: any) {
     return this.svc.get(req.tenantId, studentId);
+  }
+
+  @Post(':studentId/topup')
+  topup(@Param('studentId') studentId: string, @Body() dto: TopupDto, @Req() req: any) {
+    return this.svc.topup(req.tenantId, studentId, dto.amountCents, dto.note);
   }
 }
