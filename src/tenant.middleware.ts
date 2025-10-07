@@ -1,15 +1,18 @@
 import { BadRequestException, Injectable, NestMiddleware } from '@nestjs/common';
-import type { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
   use(req: Request, _res: Response, next: NextFunction) {
-    const raw = req.headers['x-tenant'];
-    if (!raw || Array.isArray(raw)) {
-      throw new BadRequestException('Missing x-tenant header');
+    const path = req.originalUrl.split('?')[0] || '';
+
+    const needsTenant = path.startsWith('/auth/');
+    if (needsTenant) {
+      const tid = (req.headers['x-tenant'] as string | undefined)?.trim();
+      if (!tid) throw new BadRequestException('Missing x-tenant header');
+      req.tenantId = tid; // <- isso vai compilar após a augmentation correta no .d.ts
     }
-    // anexa o tenantId para uso nos controllers/services
-    (req as any).tenantId = raw;
+
     next();
   }
 }

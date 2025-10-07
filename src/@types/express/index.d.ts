@@ -1,15 +1,13 @@
-declare global {
-  namespace Express {
-    interface Request {
-      tenantId?: string;
-      user?: {
-        sub: string;
-        tid: string;
-        role: 'ADMIN' | 'GESTOR' | 'OPERADOR' | 'RESPONSAVEL';
-        iat?: number;
-        exp?: number;
-      };
-    }
+declare namespace Express {
+  interface UserPayload {
+    sub: string;
+    tid: string;
+    role: 'ADMIN' | 'GESTOR' | 'OPERADOR' | 'RESPONSAVEL';
+    [k: string]: any;
+  }
+
+  interface Request {
+    tenantId?: string;
+    user?: UserPayload;
   }
 }
-export {};

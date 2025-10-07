@@ -1,10 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateOrderDto, ListOrdersQueryDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
 
+@ApiTags('orders')
+@ApiBearerAuth()
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
