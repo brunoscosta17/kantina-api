@@ -1,0 +1,20 @@
+# Node / build
+node_modules/
+dist/
+coverage/
+*.log
+
+# Env
+.env
+.env.*
+
+# Prisma
+.prisma/
+prisma/dev.db
+prisma/*.sqlite
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+EOF
