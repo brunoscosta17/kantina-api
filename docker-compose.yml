@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kantina-api
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:-kantina-secret}
+    depends_on:
+      - db
+    profiles: ['local-db']
+
+  db:
+    image: postgres:16
+    container_name: kantina-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kantina
+      POSTGRES_USER: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    profiles: ['local-db']
+
+  api-neon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kantina-api-neon
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:-kantina-secret}
+    profiles: ['neon']
+
+volumes:
+  pgdata:

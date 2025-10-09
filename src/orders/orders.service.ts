@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
@@ -105,54 +106,62 @@ export class OrdersService {
     });
   }
 
-  async cancel(tenantId: string, orderId: string) {
-    // cancela; se estiver PAID, estorna para a carteira
-    return this.prisma.$transaction(async (tx) => {
-      const order = await tx.order.findFirst({
-        where: { id: orderId, tenantId },
-        include: { items: true, student: true },
-      });
-      if (!order) throw new NotFoundException('Order not found');
-      if (order.status === 'FULFILLED') {
-        throw new BadRequestException('Fulfilled orders cannot be cancelled');
-      }
-      if (order.status === 'CANCELLED') {
-        return order; // idempotência
-      }
+  async cancel(tenantId: string, orderId: string, actorUserId: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const order = await tx.order.findFirst({
+          where: { id: orderId, tenantId },
+          include: { items: true, student: true },
+        });
+        if (!order) throw new NotFoundException('Order not found');
 
-      // calcula total a partir dos itens do pedido
-      const totalCents = order.items.reduce((acc, it) => acc + it.unitPriceCents * it.qty, 0);
+        if (order.status === 'FULFILLED') {
+          throw new BadRequestException('Cannot cancel a fulfilled order');
+        }
+        if (order.status === 'CANCELLED') {
+          return order; // já cancelado (idempotente)
+        }
 
-      // update status
-      const updated = await tx.order.update({
-        where: { id: order.id },
-        data: { status: 'CANCELLED' },
-      });
+        // Total do pedido
+        const total = order.items.reduce((acc, it) => acc + it.unitPriceCents * it.qty, 0);
 
-      // se estava pago, estorna
-      if (order.status === 'PAID') {
+        // REFUND idempotente
+        const requestId = `refund:order:${order.id}`;
+
+        // Encontra wallet do aluno
         const wallet = await tx.wallet.findFirst({
           where: { tenantId, studentId: order.studentId },
-          select: { id: true },
         });
-        if (!wallet) throw new NotFoundException('Wallet not found for refund');
+        if (!wallet) throw new NotFoundException('Wallet not found for student');
 
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { balanceCents: { increment: totalCents } },
-        });
-        await tx.walletTransaction.create({
-          data: {
-            walletId: wallet.id,
-            tenantId,
-            type: 'REFUND',
-            amountCents: totalCents,
-            meta: { orderId: order.id },
-          },
-        });
-      }
+        // Verifica se já tem refund dessa ordem
+        const existing = await tx.walletTransaction.findFirst({ where: { tenantId, requestId } });
+        if (!existing && total > 0) {
+          await tx.wallet.update({
+            where: { id: wallet.id },
+            data: { balanceCents: { increment: total } },
+          });
 
-      return updated;
-    });
+          await tx.walletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              tenantId,
+              type: 'REFUND',
+              amountCents: total,
+              meta: { reason: 'ORDER_CANCELLED', orderId: order.id, actorUserId },
+              requestId,
+            },
+          });
+        }
+
+        const updated = await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'CANCELLED' },
+        });
+
+        return updated;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 }

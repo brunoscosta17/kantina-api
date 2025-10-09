@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+
+type Tx = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 @Injectable()
 export class WalletsService {
@@ -8,42 +14,151 @@ export class WalletsService {
   async get(tenantId: string, studentId: string) {
     const wallet = await this.prisma.wallet.findFirst({
       where: { tenantId, studentId },
-      include: { transactions: { orderBy: { createdAt: 'desc' }, take: 10 } },
+      include: { transactions: { orderBy: { createdAt: 'desc' }, take: 20 } },
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
-    return {
-      balanceCents: wallet.balanceCents,
-      lastTransactions: wallet.transactions,
-    };
+    return wallet;
   }
 
-  async topup(tenantId: string, studentId: string, amountCents: number, note?: string) {
+  async topup(
+    tenantId: string,
+    studentId: string,
+    amountCents: number,
+    requestId?: string,
+    meta?: any,
+  ) {
     if (amountCents <= 0) throw new BadRequestException('Amount must be positive');
+    return this.prisma.$transaction(
+      async (tx) => {
+        const wallet = await this.ensureWallet(tx, tenantId, studentId);
+        // Idempotência: se requestId existe, retorna a transação
+        const reused = await this.findByRequestId(tx, tenantId, requestId);
+        if (reused) return await this.reloadWallet(tx, wallet.id);
 
-    return this.prisma.$transaction(async (tx) => {
-      const wallet = await tx.wallet.findFirst({
-        where: { tenantId, studentId },
-        select: { id: true },
-      });
-      if (!wallet) throw new NotFoundException('Wallet not found');
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balanceCents: { increment: amountCents } },
+        });
 
-      const updated = await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balanceCents: { increment: amountCents } },
-        select: { id: true, balanceCents: true },
-      });
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            tenantId,
+            type: 'TOPUP',
+            amountCents,
+            meta: meta ?? undefined,
+            requestId: requestId ?? null,
+          },
+        });
 
-      const trx = await tx.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          tenantId,
-          type: 'TOPUP',
-          amountCents,
-          meta: note ? { note } : undefined,
-        },
-      });
+        return this.reloadWallet(tx, wallet.id);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
 
-      return { balanceCents: updated.balanceCents, lastTransaction: trx };
+  async debit(
+    tenantId: string,
+    studentId: string,
+    amountCents: number,
+    requestId?: string,
+    meta?: any,
+  ) {
+    if (amountCents <= 0) throw new BadRequestException('Amount must be positive');
+    return this.prisma.$transaction(
+      async (tx) => {
+        const wallet = await this.ensureWallet(tx, tenantId, studentId);
+
+        // Idempotência
+        const reused = await this.findByRequestId(tx, tenantId, requestId);
+        if (reused) return await this.reloadWallet(tx, wallet.id);
+
+        // Recarrega saldo “for update” (via update de no-op) para checar
+        const current = await tx.wallet.findUnique({
+          where: { id: wallet.id },
+          select: { balanceCents: true },
+        });
+        if (!current) throw new NotFoundException('Wallet not found');
+
+        if (current.balanceCents < amountCents) {
+          throw new BadRequestException('Insufficient funds');
+        }
+
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balanceCents: { decrement: amountCents } },
+        });
+
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            tenantId,
+            type: 'DEBIT',
+            amountCents,
+            meta: meta ?? undefined,
+            requestId: requestId ?? null,
+          },
+        });
+
+        return this.reloadWallet(tx, wallet.id);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
+  async refund(
+    tenantId: string,
+    studentId: string,
+    amountCents: number,
+    requestId?: string,
+    meta?: any,
+  ) {
+    if (amountCents <= 0) throw new BadRequestException('Amount must be positive');
+    return this.prisma.$transaction(
+      async (tx) => {
+        const wallet = await this.ensureWallet(tx, tenantId, studentId);
+
+        const reused = await this.findByRequestId(tx, tenantId, requestId);
+        if (reused) return await this.reloadWallet(tx, wallet.id);
+
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balanceCents: { increment: amountCents } },
+        });
+
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            tenantId,
+            type: 'REFUND',
+            amountCents,
+            meta: meta ?? undefined,
+            requestId: requestId ?? null,
+          },
+        });
+
+        return this.reloadWallet(tx, wallet.id);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
+  // --- helpers ---
+  private async ensureWallet(tx: Tx, tenantId: string, studentId: string) {
+    const wallet = await tx.wallet.findFirst({ where: { tenantId, studentId } });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+    return wallet;
+  }
+
+  private async reloadWallet(tx: Tx, walletId: string) {
+    return tx.wallet.findUnique({
+      where: { id: walletId },
+      include: { transactions: { orderBy: { createdAt: 'desc' }, take: 20 } },
     });
+  }
+
+  private async findByRequestId(tx: Tx, tenantId: string, requestId?: string | null) {
+    if (!requestId) return null;
+    return tx.walletTransaction.findFirst({ where: { tenantId, requestId } });
   }
 }

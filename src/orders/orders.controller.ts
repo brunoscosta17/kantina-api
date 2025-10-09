@@ -6,7 +6,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { CreateOrderDto, ListOrdersQueryDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
 
-@ApiTags('orders')
+@ApiTags('Orders')
 @ApiBearerAuth()
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -30,10 +30,10 @@ export class OrdersController {
     return this.svc.fulfill(req.tenantId, id);
   }
 
-  @Post(':id/cancel')
-  @UseGuards(RolesGuard)
+  @Post(':orderId/cancel')
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')
-  cancel(@Req() req: any, @Param('id') id: string) {
-    return this.svc.cancel(req.tenantId, id);
+  cancel(@Req() req: Express.Request, @Param('orderId') orderId: string) {
+    const actorUserId = (req as any).user?.sub;
+    return this.svc.cancel(req.tenantId!, orderId, actorUserId);
   }
 }

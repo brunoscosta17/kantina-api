@@ -1,15 +1,18 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core/constants';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { CategoriesService } from './categories/categories.service';
+import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma.module';
 import { ReportsModule } from './reports/reports.module';
 import { TenantMiddleware } from './tenant.middleware';
 import { WalletsModule } from './wallets/wallets.module';
-import { CategoriesService } from './categories/categories.service';
 
 @Module({
   imports: [
@@ -20,9 +23,16 @@ import { CategoriesService } from './categories/categories.service';
     WalletsModule,
     OrdersModule,
     ReportsModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 15 * 60 * 1000,
+        limit: 100,
+      },
+    ]),
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, CategoriesService],
+  providers: [AppService, CategoriesService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

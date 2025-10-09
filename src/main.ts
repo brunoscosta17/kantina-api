@@ -7,7 +7,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // CORS: liberar front (ajustaremos origem depois)
-  app.enableCors({ origin: '*', credentials: true });
+  app.enableCors({
+    origin: ['*', /localhost:\d+$/, /\.kantina\.app\.br$/],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  });
 
   // Validação: remove campos não declarados nos DTOs (whitelist)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));

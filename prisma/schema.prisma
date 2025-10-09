@@ -68,15 +68,19 @@ model WalletTransaction {
   id          String   @id @default(uuid())
   walletId    String
   tenantId    String
-  type        String // "TOPUP" | "DEBIT" | "REFUND"
+  type        String   // "TOPUP" | "DEBIT" | "REFUND"
   amountCents Int
   meta        Json?
   createdAt   DateTime @default(now())
+
+  /// NEW: idempotência por requisição
+  requestId   String?  // um identificador único opcional por tenant
+
   wallet      Wallet   @relation(fields: [walletId], references: [id])
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
 
-  @@index([tenantId, createdAt])
-  @@index([tenantId, type, createdAt])
+  @@index([tenantId])
+  @@unique([tenantId, requestId], map: "wallet_tx_unique_request_per_tenant") // NEW
 }
 
 model Category {
