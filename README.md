@@ -116,14 +116,155 @@ bearer (http) → deixe vazio por enquanto
 5 Agora todas as rotas autenticadas funcionarão automaticamente.
 
 🧩 Rotas principais (MVP)
+🧩 Rotas principais (MVP)
 Módulo Método Endpoint Descrição
 Auth POST /auth/login Login e geração de token
 Auth POST /auth/register Cadastro de usuário (por tenant)
 Catalog GET /catalog Lista de produtos do tenant
 Orders GET /orders Lista de pedidos realizados
-Wallets GET /wallets Consulta saldo e transações
-Students GET /students Lista alunos vinculados
-Tenants GET /tenants Admin: listar tenants (opcional)
+Wallets GET /wallets/:studentId Consulta saldo do aluno
+Wallets POST /wallets/:studentId/topup Adiciona saldo
+Wallets POST /wallets/:studentId/debit Debita valor
+Wallets POST /wallets/:studentId/refund Reembolsa valor
+Reports GET /reports/orders Relatório de pedidos
+Reports GET /reports/transactions Relatório de transações
+Health GET /health Verifica status da API
+
+🧮 Exemplos de Requisições e Respostas
+🔹 1. Auth - Login
+
+Request
+
+POST /auth/login
+Headers:
+x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
+Content-Type: application/json
+
+{
+"email": "admin@demo.com",
+"password": "admin123"
+}
+
+Response
+
+{
+"accessToken": "eyJhbGc...",
+"tokenType": "Bearer",
+"expiresIn": 900
+}
+
+🔹 2. Catalog - Lista de Produtos
+
+Request
+
+GET /catalog
+Headers:
+Authorization: Bearer <token>
+x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
+
+Response
+
+[
+{
+"id": "b7c85a10-11e8-4e9a-bab2-1a4a611e9a53",
+"name": "Coxinha de frango",
+"price": 6.50,
+"category": "Salgados",
+"available": true
+},
+{
+"id": "04d2c7b7-ef98-4ad9-a25c-302d3e708dd8",
+"name": "Suco de laranja",
+"price": 4.00,
+"category": "Bebidas",
+"available": true
+}
+]
+
+🔹 3. Wallets - Consultar saldo
+
+Request
+
+GET /wallets/1
+Headers:
+Authorization: Bearer <token>
+x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
+
+Response
+
+{
+"studentId": 1,
+"balance": 28.50,
+"transactions": [
+{
+"id": "t1",
+"type": "TOPUP",
+"amount": 20.00,
+"date": "2025-10-14T12:00:00.000Z"
+},
+{
+"id": "t2",
+"type": "DEBIT",
+"amount": -8.50,
+"date": "2025-10-14T13:20:00.000Z"
+}
+]
+}
+
+🔹 4. Orders - Criar pedido
+
+Request
+
+POST /orders
+Headers:
+Authorization: Bearer <token>
+x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
+Content-Type: application/json
+
+{
+"studentId": "1",
+"items": [
+{ "itemId": "b7c85a10-11e8-4e9a-bab2-1a4a611e9a53", "quantity": 2 },
+{ "itemId": "04d2c7b7-ef98-4ad9-a25c-302d3e708dd8", "quantity": 1 }
+]
+}
+
+Response
+
+{
+"orderId": "bfa6a50b-73f0-496d-9486-6f510a60ff2e",
+"status": "PENDING",
+"total": 17.00,
+"createdAt": "2025-10-14T15:00:00.000Z"
+}
+
+🔹 5. Reports - Transações
+
+Request
+
+GET /reports/transactions
+Headers:
+Authorization: Bearer <token>
+x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
+
+Response
+
+[
+{
+"transactionId": "t1",
+"studentName": "Lucas Pereira",
+"type": "TOPUP",
+"amount": 20,
+"date": "2025-10-14T12:00:00.000Z"
+},
+{
+"transactionId": "t2",
+"studentName": "Lucas Pereira",
+"type": "DEBIT",
+"amount": -8.50,
+"date": "2025-10-14T13:20:00.000Z"
+}
+]
 
 🧪 Scripts úteis
 Comando Descrição
@@ -145,6 +286,12 @@ JWT_EXPIRES_IN Tempo de expiração do token (ex: 900s)
 FRONTEND_ORIGINS Lista de origens permitidas (CORS)
 DATABASE_URL String de conexão completa do banco
 NODE_ENV Define o modo (development ou production)
+
+🧭 Swagger UI
+
+A documentação interativa está disponível em:
+
+🔗 http://localhost:3000/docs
 
 🧪 Testes
 
