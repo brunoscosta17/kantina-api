@@ -7,9 +7,17 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS: liberar front (ajustaremos origem depois)
+  function parseOrigins(env?: string) {
+    if (!env) return [/localhost:\d+$/];
+    return env
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  const origins = parseOrigins(process.env.FRONTEND_ORIGINS);
   app.enableCors({
-    origin: ['*', /localhost:\d+$/, /\.kantina\.app\.br$/],
+    origin: origins,
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -24,9 +32,16 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .addBearerAuth()
     .addApiKey(
-      { type: 'apiKey', in: 'header', name: 'x-tenant', description: 'Tenant ID' },
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'x-tenant',
+        description: 'Tenant ID (apenas no /auth/login)',
+      },
       'tenant',
     )
+    .addSecurityRequirements('tenant')
+    .addSecurityRequirements('bearer')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
