@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 
-type Tx = Omit<
-  PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
->;
+type Tx = Prisma.TransactionClient; // <— tipo oficial do Prisma p/ transação
+
+type Meta = Record<string, unknown> | undefined;
 
 @Injectable()
 export class WalletsService {
@@ -25,15 +24,17 @@ export class WalletsService {
     studentId: string,
     amountCents: number,
     requestId?: string,
-    meta?: any,
+    meta?: Meta,
   ) {
     if (amountCents <= 0) throw new BadRequestException('Amount must be positive');
+
     return this.prisma.$transaction(
       async (tx) => {
         const wallet = await this.ensureWallet(tx, tenantId, studentId);
-        // Idempotência: se requestId existe, retorna a transação
+
+        // Idempotência
         const reused = await this.findByRequestId(tx, tenantId, requestId);
-        if (reused) return await this.reloadWallet(tx, wallet.id);
+        if (reused) return this.reloadWallet(tx, wallet.id);
 
         await tx.wallet.update({
           where: { id: wallet.id },
@@ -46,8 +47,8 @@ export class WalletsService {
             tenantId,
             type: 'TOPUP',
             amountCents,
-            meta: meta ?? undefined,
             requestId: requestId ?? null,
+            meta: meta ? (meta as Prisma.InputJsonValue) : undefined,
           },
         });
 
@@ -62,24 +63,23 @@ export class WalletsService {
     studentId: string,
     amountCents: number,
     requestId?: string,
-    meta?: any,
+    meta?: Meta,
   ) {
     if (amountCents <= 0) throw new BadRequestException('Amount must be positive');
+
     return this.prisma.$transaction(
       async (tx) => {
         const wallet = await this.ensureWallet(tx, tenantId, studentId);
 
         // Idempotência
         const reused = await this.findByRequestId(tx, tenantId, requestId);
-        if (reused) return await this.reloadWallet(tx, wallet.id);
+        if (reused) return this.reloadWallet(tx, wallet.id);
 
-        // Recarrega saldo “for update” (via update de no-op) para checar
         const current = await tx.wallet.findUnique({
           where: { id: wallet.id },
           select: { balanceCents: true },
         });
         if (!current) throw new NotFoundException('Wallet not found');
-
         if (current.balanceCents < amountCents) {
           throw new BadRequestException('Insufficient funds');
         }
@@ -95,8 +95,8 @@ export class WalletsService {
             tenantId,
             type: 'DEBIT',
             amountCents,
-            meta: meta ?? undefined,
             requestId: requestId ?? null,
+            meta: meta ? (meta as Prisma.InputJsonValue) : undefined,
           },
         });
 
@@ -111,15 +111,16 @@ export class WalletsService {
     studentId: string,
     amountCents: number,
     requestId?: string,
-    meta?: any,
+    meta?: Meta,
   ) {
     if (amountCents <= 0) throw new BadRequestException('Amount must be positive');
+
     return this.prisma.$transaction(
       async (tx) => {
         const wallet = await this.ensureWallet(tx, tenantId, studentId);
 
         const reused = await this.findByRequestId(tx, tenantId, requestId);
-        if (reused) return await this.reloadWallet(tx, wallet.id);
+        if (reused) return this.reloadWallet(tx, wallet.id);
 
         await tx.wallet.update({
           where: { id: wallet.id },
@@ -132,8 +133,8 @@ export class WalletsService {
             tenantId,
             type: 'REFUND',
             amountCents,
-            meta: meta ?? undefined,
             requestId: requestId ?? null,
+            meta: meta ? (meta as Prisma.InputJsonValue) : undefined,
           },
         });
 
