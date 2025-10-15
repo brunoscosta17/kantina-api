@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GESTOR
+  OPERADOR
+  RESPONSAVEL
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users      User[]
+  students   Student[]
+  categories Category[]
+  items      CatalogItem[]
+  wallets    Wallet[]
+  txs        WalletTransaction[]
+  orders     Order[]
+}
+
+model User {
+  id       String @id @default(uuid())
+  tenantId String
+  email    String
+  password String
+  role     Role
+
+  // novo:
+  isActive Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email], name: "tenantId_email")
+  @@map("User")
+}
+
+model Student {
+  id       String @id @default(uuid())
+  tenantId String
+  name     String
+
+  // deixar opcional para casar com dto.classroom ?? null:
+  classroom String? // <= era obrigatório; torna-se opcional
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  Wallet Wallet?
+  Order  Order[]
+
+  // mantém o unique composto; Postgres permite múltiplos NULLs
+  @@unique([tenantId, name, classroom], name: "tenantId_name_classroom")
+  @@map("Student")
+}
+
+model Wallet {
+  id           String @id @default(uuid())
+  tenantId     String
+  studentId    String @unique
+  balanceCents Int
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  transactions WalletTransaction[]
+
+  @@map("Wallet")
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  tenantId    String
+  type        String
+  amountCents Int
+  meta        Json?
+  createdAt   DateTime @default(now())
+  requestId   String?
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, requestId], map: "wallet_tx_unique_request_per_tenant")
+  @@index([tenantId])
+}
+
+model Category {
+  id        String @id @default(uuid())
+  tenantId  String
+  name      String
+  sortOrder Int
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  items CatalogItem[]
+
+  @@unique([tenantId, name], name: "tenantId_name")
+  @@map("Category")
+}
+
+model CatalogItem {
+  id         String @id @default(uuid())
+  tenantId   String
+  categoryId String
+  name       String
+  priceCents Int
+
+  // novos:
+  isActive Boolean @default(true)
+  imageUrl String? // usado no código
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  orderItems OrderItem[]
+
+  @@unique([tenantId, categoryId, name], name: "tenantId_categoryId_name")
+  @@map("CatalogItem")
+}
+
+model Order {
+  id        String   @id @default(uuid())
+  tenantId  String
+  studentId String
+  status    String   @default("CREATED")
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  items OrderItem[]
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, studentId, createdAt])
+}
+
+model OrderItem {
+  id             String @id @default(uuid())
+  orderId        String
+  itemId         String
+  qty            Int
+  unitPriceCents Int
+
+  order Order       @relation(fields: [orderId], references: [id])
+  item  CatalogItem @relation(fields: [itemId], references: [id])
+}

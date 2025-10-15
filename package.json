@@ -24,7 +24,8 @@
     "dev:docker:down": "docker compose down -v",
     "db:migrate": "docker compose exec api pnpm prisma migrate dev --name init",
     "db:reset": "docker compose exec api pnpm prisma migrate reset --force",
-    "db:seed:demo": "docker compose exec api pnpm dlx tsx prisma/seed.demo.ts"
+    "db:seed:demo": "docker compose exec api pnpm dlx tsx prisma/seed.demo.ts",
+    "seed:local": "tsx src/prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -39,11 +40,13 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "helmet": "^8.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -53,6 +56,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
+    "@types/helmet": "^4.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
