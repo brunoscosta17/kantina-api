@@ -19,7 +19,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand",
     "prisma:seed": "tsx prisma/seed.ts",
-    "prisma:seed:demo": "tsx prisma/seed.demo.ts"
+    "prisma:seed:demo": "tsx prisma/seed.demo.ts",
+    "dev:docker:up": "docker compose --profile local-db up -d --build",
+    "dev:docker:down": "docker compose down -v",
+    "db:migrate": "docker compose exec api pnpm prisma migrate dev --name init",
+    "db:reset": "docker compose exec api pnpm prisma migrate reset --force",
+    "db:seed:demo": "docker compose exec api pnpm dlx tsx prisma/seed.demo.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

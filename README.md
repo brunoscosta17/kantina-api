@@ -1,335 +1,249 @@
 # 🧩 Kantina API
 
-API desenvolvida com **NestJS**, **Prisma ORM** e **PostgreSQL** para o sistema **Kantina**, uma plataforma de gestão de cantinas escolares com suporte a **multi-tenant**.
+API desenvolvida com **NestJS**, **Prisma ORM** e **PostgreSQL** para o sistema **Kantina**, uma plataforma de gestão de cantinas escolares com suporte a **multi-tenant**, autenticação JWT e documentação interativa via Swagger.
 
----
+## ⚡️ Quick Start
 
-## 🚀 Tecnologias utilizadas
+### 🧰 Pré-requisitos
+- [Node.js 20+](https://nodejs.org)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [pnpm](https://pnpm.io/)
 
-| Tecnologia                  | Versão    | Descrição                          |
-| --------------------------- | --------- | ---------------------------------- |
-| **Node.js**                 | 20.x      | Ambiente de execução JavaScript    |
-| **NestJS**                  | ^11.0.0   | Framework backend modular e tipado |
-| **Prisma ORM**              | ^6.17.0   | ORM para banco PostgreSQL          |
-| **PostgreSQL**              | 15+       | Banco de dados relacional          |
-| **Docker + Docker Compose** | latest    | Gerenciamento de ambiente local    |
-| **Swagger**                 | integrado | Documentação interativa da API     |
-| **JWT (Passport)**          | ^11.0.0   | Autenticação segura com tokens     |
-| **Throttler**               | ^6.4.0    | Rate limiting de requisições       |
-| **bcrypt**                  | ^6.0.0    | Hash de senhas                     |
+### 🚀 Passos rápidos
 
----
+# 1️⃣ Clonar o repositório
+git clone https://github.com/seuusuario/kantina-api.git
+cd kantina-api
 
-## 🧱 Estrutura do projeto
+# 2️⃣ Subir os containers (API + DB)
+docker compose --profile local-db up -d --build
+
+# 3️⃣ Criar e popular o banco de dados
+docker compose exec api pnpm prisma migrate dev --name init
+docker compose exec api pnpm dlx tsx prisma/seed.demo.ts
+
+# ✅ Credenciais demo
+# TENANT_ID= <exibido no terminal>
+# Email: admin@demo.com
+# Senha: admin123
+
+# 4️⃣ Acessar a documentação
+# 👉 http://localhost:3000/docs
+
+🚀 Tecnologias utilizadas
+
+Tecnologia	Versão	Descrição
+Node.js	20.x	Ambiente de execução JavaScript
+NestJS	^11.0.0	Framework backend modular e tipado
+Prisma ORM	^6.17.0	ORM para PostgreSQL
+PostgreSQL	15+	Banco de dados relacional
+Docker + Docker Compose	latest	Ambiente de desenvolvimento isolado
+Swagger	integrado	Documentação interativa da API
+JWT (Passport)	^11.0.0	Autenticação segura via token
+Throttler	^6.4.0	Rate limiting (100 req / 15 min)
+bcrypt	^6.0.0	Hash de senhas
+
+🧱 Estrutura do projeto
 
 kantina-api/
 │
 ├── prisma/
-│ ├── schema.prisma # Schema do banco de dados
-│ ├── seed.ts # Seed padrão
-│ └── seed.demo.ts # Seed com tenant e usuário de demonstração
+│   ├── schema.prisma           # Schema do banco de dados
+│   ├── seed.ts                 # Seed padrão
+│   └── seed.demo.ts            # Seed com tenant e usuário demo
 │
 ├── src/
-│ ├── app.module.ts # Módulo raiz da aplicação
-│ ├── main.ts # Ponto de entrada (bootstrap)
-│ ├── common/ # Filtros, interceptors e middlewares
-│ ├── auth/ # Módulo de autenticação (login/register)
-│ ├── tenants/ # Middleware e guardas de tenant
-│ ├── users/ # CRUD de usuários
-│ ├── catalog/ # Produtos e cardápio
-│ ├── orders/ # Pedidos
-│ ├── wallets/ # Carteiras digitais
-│ └── students/ # Alunos vinculados ao tenant
+│   ├── app.module.ts           # Módulo raiz
+│   ├── main.ts                 # Bootstrap da aplicação
+│   ├── common/                 # Filtros e interceptors globais
+│   ├── auth/                   # Autenticação (login/register)
+│   ├── tenants/                # Middleware multi-tenant
+│   ├── users/                  # Usuários
+│   ├── catalog/                # Produtos e cardápio
+│   ├── orders/                 # Pedidos
+│   ├── wallets/                # Carteiras digitais
+│   └── students/               # Alunos vinculados
 │
-├── Dockerfile # Build da imagem da API
-├── docker-compose.yml # Serviços API + Banco de dados
-├── package.json # Scripts e dependências
-├── .env # Variáveis de ambiente (local)
-└── README.md # Este documento
-
+├── Dockerfile
+├── docker-compose.yml
+├── package.json
+├── .env
+└── README.md
 ⚙️ Configuração do ambiente
-
-# Banco de dados (modo local)
+🔧 Variáveis de ambiente (.env)
+env
 
 DATABASE_URL="postgresql://postgres:postgres@db:5432/kantina"
-
-# JWT
-
 JWT_SECRET="kantina-secret"
+FRONTEND_ORIGINS="http://localhost:5173,https://kantina.app.br"
+💡 Caso use banco remoto (ex: Neon):
 
-# Opcional: Banco remoto (Neon)
-
-# DATABASE_URL="postgresql://<user>:<password>@<host>/<database>?sslmode=require"
+DATABASE_URL="postgresql://<user>:<password>@<host>/<database>?sslmode=require"
 
 🐳 Execução com Docker
-
-1️⃣ Build e subir containers
+1️⃣ Subir containers
 
 docker compose --profile local-db up -d --build
-
 Isso cria dois containers:
 
 kantina-api → aplicação NestJS
 
 kantina-pg → banco PostgreSQL
 
-2️⃣ Executar seed demo
+Ver logs:
+
+
+docker compose logs -f api
+Encerrar tudo:
+
+
+docker compose down -v
+🧩 Banco de dados & Prisma
+Reset do banco
+
+docker compose exec api pnpm prisma migrate reset --force
+Criar migração inicial
+
+docker compose exec api pnpm prisma migrate dev --name init
+Status das migrações
+
+docker compose exec api pnpm prisma migrate status
+🌱 Seed de demonstração
 
 docker compose exec api pnpm dlx tsx prisma/seed.demo.ts
-
 ✅ Saída esperada:
 
+nginx
+
 Seed DEMO OK
-TENANT_ID= f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
+TENANT_ID= 77abd4e8-76a2-4bd7-ab93-c112886c218a
 Login como: admin@demo.com / admin123
+🔐 Autenticação e Multi-Tenant
+A API usa dois mecanismos:
 
-🧠 Autenticação e Multi-Tenant
+Header	Tipo	Descrição
+x-tenant	apiKey	Identifica o tenant atual (exigido apenas no /auth/login)
+Authorization: Bearer <token>	bearer	Token JWT obtido após login
 
-A API usa dois mecanismos de autenticação:
-
-Header Tipo Descrição
-x-tenant apiKey Identifica o tenant atual (exigido no /auth/login)
-Authorization: Bearer <token> bearer Token JWT obtido após login
-
-🔐 Fluxo completo
-
-Vá até http://localhost:3000/docs
+🧠 Fluxo de autenticação (Swagger)
+Acesse: http://localhost:3000/docs
 
 Clique em Authorize
 
-tenant (apiKey) → cole o TENANT_ID do seed
-(ex: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4)
+No campo tenant (apiKey) insira o TENANT_ID gerado pelo seed
 
-bearer (http) → deixe vazio por enquanto
-
-3 Execute a rota POST /auth/login
+Execute o POST /auth/login:
 
 {
-"email": "admin@demo.com",
-"password": "admin123"
+  "email": "admin@demo.com",
+  "password": "admin123"
 }
+Copie o accessToken retornado e insira no campo bearer
 
-4 Copie o valor de accessToken retornado.
+Teste as demais rotas autenticadas normalmente
 
-5 Volte em Authorize, e preencha o campo bearer com o token.
-
-5 Agora todas as rotas autenticadas funcionarão automaticamente.
-
-🧩 Rotas principais (MVP)
-🧩 Rotas principais (MVP)
-Módulo Método Endpoint Descrição
-Auth POST /auth/login Login e geração de token
-Auth POST /auth/register Cadastro de usuário (por tenant)
-Catalog GET /catalog Lista de produtos do tenant
-Orders GET /orders Lista de pedidos realizados
-Wallets GET /wallets/:studentId Consulta saldo do aluno
-Wallets POST /wallets/:studentId/topup Adiciona saldo
-Wallets POST /wallets/:studentId/debit Debita valor
-Wallets POST /wallets/:studentId/refund Reembolsa valor
-Reports GET /reports/orders Relatório de pedidos
-Reports GET /reports/transactions Relatório de transações
-Health GET /health Verifica status da API
-
-🧮 Exemplos de Requisições e Respostas
-🔹 1. Auth - Login
-
-Request
-
-POST /auth/login
-Headers:
-x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
-Content-Type: application/json
-
-{
-"email": "admin@demo.com",
-"password": "admin123"
-}
-
-Response
-
-{
-"accessToken": "eyJhbGc...",
-"tokenType": "Bearer",
-"expiresIn": 900
-}
-
-🔹 2. Catalog - Lista de Produtos
-
-Request
-
-GET /catalog
-Headers:
-Authorization: Bearer <token>
-x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
-
-Response
-
-[
-{
-"id": "b7c85a10-11e8-4e9a-bab2-1a4a611e9a53",
-"name": "Coxinha de frango",
-"price": 6.50,
-"category": "Salgados",
-"available": true
-},
-{
-"id": "04d2c7b7-ef98-4ad9-a25c-302d3e708dd8",
-"name": "Suco de laranja",
-"price": 4.00,
-"category": "Bebidas",
-"available": true
-}
-]
-
-🔹 3. Wallets - Consultar saldo
-
-Request
-
-GET /wallets/1
-Headers:
-Authorization: Bearer <token>
-x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
-
-Response
-
-{
-"studentId": 1,
-"balance": 28.50,
-"transactions": [
-{
-"id": "t1",
-"type": "TOPUP",
-"amount": 20.00,
-"date": "2025-10-14T12:00:00.000Z"
-},
-{
-"id": "t2",
-"type": "DEBIT",
-"amount": -8.50,
-"date": "2025-10-14T13:20:00.000Z"
-}
-]
-}
-
-🔹 4. Orders - Criar pedido
-
-Request
-
-POST /orders
-Headers:
-Authorization: Bearer <token>
-x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
-Content-Type: application/json
-
-{
-"studentId": "1",
-"items": [
-{ "itemId": "b7c85a10-11e8-4e9a-bab2-1a4a611e9a53", "quantity": 2 },
-{ "itemId": "04d2c7b7-ef98-4ad9-a25c-302d3e708dd8", "quantity": 1 }
-]
-}
-
-Response
-
-{
-"orderId": "bfa6a50b-73f0-496d-9486-6f510a60ff2e",
-"status": "PENDING",
-"total": 17.00,
-"createdAt": "2025-10-14T15:00:00.000Z"
-}
-
-🔹 5. Reports - Transações
-
-Request
-
-GET /reports/transactions
-Headers:
-Authorization: Bearer <token>
-x-tenant: f9d0f15f-dc95-4b79-8b67-d8dcf0132ae4
-
-Response
-
-[
-{
-"transactionId": "t1",
-"studentName": "Lucas Pereira",
-"type": "TOPUP",
-"amount": 20,
-"date": "2025-10-14T12:00:00.000Z"
-},
-{
-"transactionId": "t2",
-"studentName": "Lucas Pereira",
-"type": "DEBIT",
-"amount": -8.50,
-"date": "2025-10-14T13:20:00.000Z"
-}
-]
+📚 Rotas principais (MVP)
+Módulo	Método	Endpoint	Descrição
+Auth	POST	/auth/login	Login e geração de token
+Auth	POST	/auth/register	Cadastro de usuário
+Catalog	GET	/catalog	Lista de produtos
+Orders	GET	/orders	Lista de pedidos
+Wallets	GET	/wallets/:studentId	Consulta saldo
+Wallets	POST	/wallets/:studentId/topup	Adiciona saldo
+Wallets	POST	/wallets/:studentId/debit	Debita valor
+Wallets	POST	/wallets/:studentId/refund	Reembolsa valor
+Reports	GET	/reports/orders	Relatório de pedidos
+Reports	GET	/reports/transactions	Relatório de transações
+Health	GET	/health	Verifica status da API
 
 🧪 Scripts úteis
-Comando Descrição
-pnpm start:dev Executa em modo desenvolvimento
-pnpm build Compila TypeScript para dist/
-pnpm prisma:generate Atualiza o cliente Prisma
-pnpm prisma migrate dev Aplica migrações locais
-pnpm prisma:seed Executa seed padrão
-pnpm prisma:seed:demo Executa seed com tenant e admin demo
-pnpm lint Corrige formatação e lint
-pnpm test Executa testes unitários
-docker compose exec api sh Acessa o shell dentro do container
-docker compose logs -f api Visualiza logs da aplicação
+Comando	Descrição
+pnpm start:dev	Executa em modo desenvolvimento
+pnpm build	Compila TypeScript para dist/
+pnpm prisma:generate	Atualiza o cliente Prisma
+pnpm prisma migrate dev	Aplica migrações locais
+pnpm prisma:seed:demo	Executa seed demo
+docker compose exec api sh	Acessa o shell do container
+docker compose logs -f api	Visualiza logs da API
 
-🧰 Variáveis adicionais (para deploy futuro)
-Variável Descrição
-PORT Porta HTTP da aplicação (padrão: 3000)
-JWT_EXPIRES_IN Tempo de expiração do token (ex: 900s)
-FRONTEND_ORIGINS Lista de origens permitidas (CORS)
-DATABASE_URL String de conexão completa do banco
-NODE_ENV Define o modo (development ou production)
-
-🧭 Swagger UI
-
-A documentação interativa está disponível em:
-
-🔗 http://localhost:3000/docs
-
-🧪 Testes
-
-Os testes usam Jest e são estruturados por módulo.
-
-pnpm test
-pnpm test:watch
-
-Para executar no container:
-
-docker compose exec api pnpm test
+🧰 Variáveis adicionais
+Variável	Descrição
+PORT	Porta HTTP da API (padrão: 3000)
+JWT_EXPIRES_IN	Tempo de expiração do token (padrão: 900s)
+FRONTEND_ORIGINS	Lista de origens permitidas (CORS)
+NODE_ENV	Ambiente (development / production)
 
 🧱 Estrutura Multi-Tenant (resumo técnico)
+Cada requisição leva x-tenant no header
 
-Cada requisição carrega x-tenant no header.
+Middleware insere req.tenantId automaticamente
 
-O middleware de tenant intercepta a requisição e injeta req.tenantId.
+O AuthService e demais módulos usam tenantId para isolar dados
 
-O AuthService e demais módulos utilizam tenantId para isolar dados.
+O JWT inclui a claim tid (tenant ID)
 
-O JWT inclui a claim tid (tenant ID).
-
-Após login, o tenant passa a ser inferido pelo token (sem header adicional).
+Após login, o tenant é inferido via token — não é mais necessário enviar x-tenant
 
 🧑‍💻 Credenciais de demonstração
-Campo Valor
-Email admin@demo.com
-Senha admin123
-Tenant ID (obtido do seed demo)
+Campo	Valor
+Email	admin@demo.com
+Senha	admin123
+Tenant ID	(obtido no seed demo)
 
-📦 Deploy (exemplo)
+🧭 Swagger UI
+📍 http://localhost:3000/docs
 
-Para gerar uma imagem pronta para produção:
+💡 Deploy em Produção (Docker Compose + NeonDB)
+🗂️ Estrutura de arquivos de produção
 
-docker build -t kantina-api:prod .
-docker run -d -p 3000:3000 --env-file .env kantina-api:prod
+kantina-api/
+├── docker-compose.prod.yml
+├── .env.prod
+└── ...
+📦 Exemplo de .env.prod
+env
+
+NODE_ENV=production
+PORT=3000
+
+# Banco hospedado (NeonDB, Supabase, Render etc.)
+DATABASE_URL="postgresql://<user>:<password>@<host>/<database>?sslmode=require"
+
+JWT_SECRET="kantina-secret"
+JWT_EXPIRES_IN="900s"
+
+FRONTEND_ORIGINS="https://kantina.app.br"
+🐳 docker-compose.prod.yml
+yaml
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kantina-api-prod
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.prod
+    environment:
+      - NODE_ENV=production
+    command: >
+      sh -c "pnpm prisma migrate deploy &&
+             pnpm start:prod"
+
+🚀 Rodar em produção
+
+docker compose -f docker-compose.prod.yml up -d --build
+Ver logs:
+
+docker compose -f docker-compose.prod.yml logs -f api
+
+Acessar:
+👉 https://kantina.app.br (em deploy real)
+👉 http://localhost:3000/docs (modo local)
 
 🧾 Licença
-
 Projeto interno © 2025 — Kantina.app.br
-Desenvolvido por Bruno Costa.
+Desenvolvido por Bruno Costa
