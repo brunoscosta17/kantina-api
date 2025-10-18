@@ -1,5 +1,4 @@
 {
   "version": 2,
-  "regions": ["gru1"],
   "routes": [{ "src": "/(.*)", "dest": "/api/index.ts" }]
 }
