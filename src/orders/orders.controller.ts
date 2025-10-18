@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -11,29 +12,32 @@ import { OrdersService } from './orders.service';
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
-  constructor(private readonly svc: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   @Get()
-  list(@Req() req: any, @Query() q: ListOrdersQueryDto) {
-    return this.svc.list(req.tenantId, q);
+  list(@Req() req: Request, @Query() q: ListOrdersQueryDto) {
+    return this.ordersService.list(req.tenantId!, q);
   }
 
   @Post()
-  create(@Req() req: any, @Body() dto: CreateOrderDto) {
-    return this.svc.create(req.tenantId, dto);
+  create(@Req() req: Request, @Body() dto: CreateOrderDto) {
+    return this.ordersService.create(req.tenantId!, dto);
   }
 
   @Post(':id/fulfill')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')
-  fulfill(@Req() req: any, @Param('id') id: string) {
-    return this.svc.fulfill(req.tenantId, id);
+  fulfill(@Req() req: Request, @Param('id') id: string) {
+    return this.ordersService.fulfill(req.tenantId!, id);
   }
 
   @Post(':orderId/cancel')
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')
-  cancel(@Req() req: Express.Request, @Param('orderId') orderId: string) {
-    const actorUserId = (req as any).user?.sub;
-    return this.svc.cancel(req.tenantId!, orderId, actorUserId);
+  cancel(@Req() req: Request, @Param('orderId') orderId: string) {
+    const actorUserId = (req.user as { sub?: string } | undefined)?.sub;
+    if (!actorUserId) {
+      throw new Error('Authenticated user id (sub) is required');
+    }
+    return this.ordersService.cancel(req.tenantId!, orderId, actorUserId);
   }
 }

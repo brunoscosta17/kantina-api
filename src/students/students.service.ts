@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentsDto } from './dto/query-students.dto';
@@ -9,8 +10,9 @@ export class StudentsService {
   constructor(private prisma: PrismaService) {}
 
   async create(tenantId: string, dto: CreateStudentDto) {
+    const { name, classroom } = dto;
     return this.prisma.student.create({
-      data: { tenantId, name: dto.name, classroom: dto.classroom ?? null },
+      data: { tenantId, name, classroom: classroom ?? null },
     });
   }
 
@@ -19,7 +21,8 @@ export class StudentsService {
     const pageSize = q.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
 
-    const where: any = { tenantId };
+    // ✅ tipagem explícita
+    const where: Prisma.StudentWhereInput = { tenantId };
     if (q.q) where.name = { contains: q.q, mode: 'insensitive' };
     if (q.classroom) where.classroom = q.classroom;
 
@@ -44,18 +47,19 @@ export class StudentsService {
 
   async update(tenantId: string, id: string, dto: UpdateStudentDto) {
     await this.ensureExists(tenantId, id);
+    const { name, classroom } = dto;
     return this.prisma.student.update({
       where: { id },
-      data: { name: dto.name, classroom: dto.classroom ?? null },
+      data: { name, classroom: classroom ?? null },
     });
   }
 
   async remove(tenantId: string, id: string) {
     // Se tiver wallet/pedidos, você pode optar por soft-delete.
-    // Aqui, validamos se não há carteira vinculada.
     const wallet = await this.prisma.wallet.findFirst({ where: { tenantId, studentId: id } });
-    if (wallet)
+    if (wallet) {
       throw new BadRequestException('Cannot delete student with wallet. Remove wallet first.');
+    }
     await this.ensureExists(tenantId, id);
     await this.prisma.student.delete({ where: { id } });
     return { ok: true };

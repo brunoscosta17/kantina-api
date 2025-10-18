@@ -1,20 +1,18 @@
-import 'express-serve-static-core';
+export {};
 
 declare global {
   namespace Express {
-    interface UserPayload {
-      sub: string;
-      tid: string;
-      role: 'ADMIN' | 'GESTOR' | 'OPERADOR' | 'RESPONSAVEL';
-      [k: string]: unknown;
-    }
-
     interface Request {
-      id: string;
+      id?: string;
       tenantId?: string;
-      user?: UserPayload;
+      user?: {
+        sub?: string;
+        email?: string;
+        role?: string;
+        tenantId?: string;
+        tid?: string;
+        [k: string]: unknown;
+      };
     }
   }
 }
-
-export {};

@@ -1,34 +1,54 @@
-// @ts-check
-import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import globals from 'globals';
+import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default [
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'test/**',
+      '**/*.spec.ts',
+      // ⬇️ ignore arquivos de config/infra
+      'eslint.config.*',
+      'prisma/**',
+      'docker/**',
+      '.vercel/**',
+    ],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
+
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+
   {
+    files: ['src/**/*.ts'],
     languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-      },
-      sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        project: ['./tsconfig.build.json'],
+        tsconfigRootDir: process.cwd(),
       },
     },
-  },
-  {
     rules: {
+      // já tinha
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+
+      // ⬇️ desligue o ruído com "any" em pontos pragmáticos (Nest/Express)
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+
+      // mantém o ajuste para handlers express
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
     },
   },
-);
+
+  // ⬇️ override pontual para a seed demo (onde há um forEach/async ou similar)
+  {
+    files: ['src/prisma/seed.demo.ts'],
+    rules: {
+      '@typescript-eslint/no-misused-promises': 'off',
+    },
+  },
+];

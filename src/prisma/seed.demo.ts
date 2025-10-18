@@ -191,7 +191,7 @@ async function main() {
 
       // 1 ou 2 itens
       const chosen = [pick(items.filter((i) => i.isActive)), pick(items.filter((i) => i.isActive))];
-      const unique = [...new Set(chosen.map((x) => x?.id))].filter(Boolean) as string[];
+      const unique = [...new Set(chosen.map((x) => x?.id))].filter(Boolean);
 
       for (const itemId of unique) {
         const item = items.find((i) => i.id === itemId)!;

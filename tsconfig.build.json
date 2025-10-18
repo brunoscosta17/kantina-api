@@ -1,11 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "typeRoots": ["./node_modules/@types", "./src/@types"],
-    "skipLibCheck": true,
-    "types": ["node"]
+    "noEmit": false,
+    "declaration": true,
+    "removeComments": true
   },
-  "include": ["src/**/*", "src/@types/**/*", "src/prisma/seed.ts"],
-  "exclude": ["src/**/*.spec.ts", "src/**/__tests__/**", "test/**/*"]
+  "include": ["src/**/*.ts", "src/@types/**/*.d.ts"],
+  "exclude": ["test", "**/*.spec.ts", "api"]
 }

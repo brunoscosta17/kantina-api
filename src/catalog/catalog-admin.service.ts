@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateCatalogItemDto } from './dto/create-item.dto';
 import { QueryItemsDto } from './dto/query-items.dto';
@@ -30,7 +31,8 @@ export class CatalogAdminService {
     const pageSize = q.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
 
-    const where: any = { tenantId };
+    // ✅ tipagem explícita elimina o `any`
+    const where: Prisma.CatalogItemWhereInput = { tenantId };
     if (q.categoryId) where.categoryId = q.categoryId;
     if (q.active === 'true') where.isActive = true;
     if (q.active === 'false') where.isActive = false;
@@ -40,6 +42,7 @@ export class CatalogAdminService {
       this.prisma.catalogItem.findMany({
         where,
         include: { category: true },
+        // (se quiser tipar também): as Prisma.CatalogItemOrderByWithRelationInput[]
         orderBy: [{ isActive: 'desc' }, { name: 'asc' }],
         skip,
         take: pageSize,
@@ -61,9 +64,12 @@ export class CatalogAdminService {
   async updateItem(tenantId: string, id: string, dto: UpdateCatalogItemDto) {
     await this.ensureItem(tenantId, id);
 
-    if (dto.categoryId) {
+    // ✅ “narrowing” evita que o ESLint veja `dto` como `any` ao acessar props
+    const { categoryId, name, priceCents, imageUrl, isActive } = dto;
+
+    if (categoryId) {
       const sameTenantCat = await this.prisma.category.findFirst({
-        where: { id: dto.categoryId, tenantId },
+        where: { id: categoryId, tenantId },
       });
       if (!sameTenantCat) throw new BadRequestException('Invalid category');
     }
@@ -71,11 +77,11 @@ export class CatalogAdminService {
     return this.prisma.catalogItem.update({
       where: { id },
       data: {
-        categoryId: dto.categoryId,
-        name: dto.name,
-        priceCents: dto.priceCents,
-        imageUrl: dto.imageUrl ?? null,
-        isActive: dto.isActive,
+        categoryId,
+        name,
+        priceCents,
+        imageUrl: imageUrl ?? null,
+        isActive,
       },
     });
   }
