@@ -8,11 +8,11 @@ export default [
       'node_modules/**',
       'test/**',
       '**/*.spec.ts',
-      // ⬇️ ignore arquivos de config/infra
       'eslint.config.*',
       'prisma/**',
       'docker/**',
       '.vercel/**',
+      'api/**',
     ],
   },
 
@@ -28,15 +28,12 @@ export default [
       },
     },
     rules: {
-      // já tinha
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
 
-      // ⬇️ desligue o ruído com "any" em pontos pragmáticos (Nest/Express)
       '@typescript-eslint/no-explicit-any': 'off',
 
-      // mantém o ajuste para handlers express
       '@typescript-eslint/no-misused-promises': [
         'error',
         { checksVoidReturn: { attributes: false } },
@@ -44,7 +41,6 @@ export default [
     },
   },
 
-  // ⬇️ override pontual para a seed demo (onde há um forEach/async ou similar)
   {
     files: ['src/prisma/seed.demo.ts'],
     rules: {

@@ -2,14 +2,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
-import type { IncomingMessage, ServerResponse } from 'http';
 import { randomUUID } from 'node:crypto';
-import { AppModule } from '../src/app.module';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
 
 const server = express();
 let isReady = false;
@@ -38,14 +34,13 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(helmet());
 
-  // Tipos explícitos aqui
-  app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as Request & { id?: string }).id =
-      (req.headers['x-request-id'] as string | undefined) ?? randomUUID();
+  app.use((req, _res, next) => {
+    // adiciona um request-id
+    req.id = req.headers['x-request-id'] ?? randomUUID();
     next();
   });
 
-  const config = new DocumentBuilder()
+  const cfg = new DocumentBuilder()
     .setTitle('Kantina API')
     .setVersion('1.0.0')
     .addBearerAuth()
@@ -62,15 +57,18 @@ async function bootstrap(): Promise<void> {
     .addSecurityRequirements('bearer')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  const doc = SwaggerModule.createDocument(app, cfg);
+  SwaggerModule.setup('docs', app, doc);
 
   await app.init();
   isReady = true;
 }
 
-// Use os tipos do runtime do Vercel e converta para http nativo para o Express
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+// exporta o handler padrão para o Vercel (usa o servidor Express já criado)
+import { Request, Response } from 'express';
+import { AppModule } from 'src/app.module';
+
+export default async function handler(req: Request, res: Response) {
   if (!isReady) await bootstrap();
-  server(req as unknown as IncomingMessage, res as unknown as ServerResponse);
+  return server(req, res);
 }
