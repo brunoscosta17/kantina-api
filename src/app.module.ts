@@ -12,6 +12,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma.module';
 import { ReportsModule } from './reports/reports.module';
 import { TenantMiddleware } from './tenant.middleware';
+import { TestsModule } from './tests/tests.module';
 import { WalletsModule } from './wallets/wallets.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { WalletsModule } from './wallets/wallets.module';
       },
     ]),
     HealthModule,
+    ...(process.env.NODE_ENV === 'production' ? [] : [TestsModule]),
   ],
   controllers: [AppController],
   providers: [AppService, CategoriesService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

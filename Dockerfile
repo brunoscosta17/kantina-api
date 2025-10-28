@@ -5,48 +5,44 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 WORKDIR /app
 
-# ---- build ----
+# ---- build (com dev deps) ----
 FROM base AS build
 WORKDIR /app
 
-# lock + deps para ci
+# 1) deps + schema primeiro
 COPY package.json pnpm-lock.yaml ./
-
-# ⚠️ agora copiamos o schema a partir de src/prisma
 COPY src/prisma ./src/prisma
-
-# instale deps (dev incluído) para compilar
 RUN pnpm install --frozen-lockfile
 
-# copie o restante do código
+# 2) código
 COPY tsconfig*.json nest-cli.json ./
 COPY src ./src
 
-# gere o Prisma Client usando o novo caminho do schema
+# 3) gera Prisma Client (dev) e builda
 RUN pnpm prisma generate --schema=src/prisma/schema.prisma
-
-# build do Nest (gera dist/**, incluindo dist/prisma/seed.js)
 RUN pnpm build
 
+# 4) troca para node_modules só de produção (sem scripts) E REGENERA o client
+RUN rm -rf node_modules \
+ && pnpm install --prod --frozen-lockfile --ignore-scripts \
+ && pnpm dlx prisma generate --schema=src/prisma/schema.prisma
 
-# --- runtime stage ---
+# ---- runtime ----
 FROM base AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+ENV PORT=8080
 
+# nada de instalar no runtime
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
 
-# leve os artefatos compilados
+# trazemos:
+# - node_modules (prod) com client já gerado
+# - dist compilado
+# - schema (opcional; útil p/ ferramentas)
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-
-# coloque o schema no caminho que o Prisma espera em prod (/app/prisma)
-# (copiamos do src para /prisma)
 COPY --from=build /app/src/prisma ./prisma
 
-# (opcional, mas útil quando só copiamos node_modules prod)
-RUN pnpm dlx prisma generate --schema=prisma/schema.prisma
-
-ENV PORT=8080
 EXPOSE 8080
 CMD ["node", "dist/main.js"]
