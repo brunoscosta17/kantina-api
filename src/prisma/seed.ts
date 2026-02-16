@@ -1,5 +1,8 @@
 import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { assertSeedIsAllowed } from './seed.guard';
+
+assertSeedIsAllowed('default');
 
 const prisma = new PrismaClient();
 

@@ -31,7 +31,7 @@ import { WalletsModule } from './wallets/wallets.module';
       },
     ]),
     HealthModule,
-    ...(process.env.NODE_ENV === 'production' ? [] : [TestsModule]),
+    ...(process.env.ENABLE_TEST_ENDPOINTS === 'true' ? [TestsModule] : []),
   ],
   controllers: [AppController],
   providers: [AppService, CategoriesService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

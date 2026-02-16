@@ -1,12 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { assertSeedIsAllowed } from './seed.guard';
+
+assertSeedIsAllowed('demo');
 
 const prisma = new PrismaClient();
 
 async function main() {
   // 1) Cria um novo tenant de demo (ou reaproveita se já existir)
-  const tenant = await prisma.tenant.create({
-    data: { name: 'Escola Kantina Demo' },
+  const tenant = await prisma.tenant.upsert({
+    where: { name: 'Escola Kantina Demo' },
+    update: {},
+    create: { name: 'Escola Kantina Demo' },
   });
 
   // 2) Usuários (roles variados)

@@ -5,11 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
     container_name: kantina-api
     ports:
-      - '3000:3000'
+      - '3000:8080'
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/kantina
       JWT_SECRET: ${JWT_SECRET:-kantina-secret}
     depends_on:
       - db
@@ -27,19 +28,57 @@ services:
       - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d
+    profiles: ['local-db']
+
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/kantina
+    depends_on:
+      - db
     profiles: ['local-db']
 
   api-neon:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
     container_name: kantina-api-neon
     ports:
-      - '3000:3000'
+      - '3000:8080'
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET:-kantina-secret}
     profiles: ['neon']
+
+  bootstrap:
+    image: curlimages/curl:8.6.0
+    depends_on:
+      - db
+      - api
+    environment:
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
+    command: >
+      sh -lc '
+        echo "Waiting API...";
+        until curl -fsS http://api:8080/health >/dev/null; do sleep 1; done;
+
+        echo "Creating admin (if not exists)...";
+        curl -fsS -X POST http://api:8080/auth/register \
+          -H "Content-Type: application/json" \
+          -H "x-tenant: default" \
+          -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" \
+        || true;
+
+        echo "Bootstrap done.";
+      '
+    profiles:
+      - local-db
 
 volumes:
   pgdata:
