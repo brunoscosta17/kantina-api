@@ -26,6 +26,8 @@ model Tenant {
   wallets    Wallet[]
   txs        WalletTransaction[]
   orders     Order[]
+
+  refreshTokens RefreshToken[]
 }
 
 model User {
@@ -39,6 +41,8 @@ model User {
   isActive Boolean @default(true)
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  refreshTokens RefreshToken[]
 
   @@unique([tenantId, email], name: "tenantId_email")
   @@map("User")
@@ -152,4 +156,20 @@ model OrderItem {
 
   order Order       @relation(fields: [orderId], references: [id])
   item  CatalogItem @relation(fields: [itemId], references: [id])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  tenantId  String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([userId, tenantId])
+  @@index([expiresAt])
 }

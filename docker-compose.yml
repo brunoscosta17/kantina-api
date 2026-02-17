@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   api:
     build:
@@ -9,11 +7,20 @@ services:
     container_name: kantina-api
     ports:
       - '3000:8080'
+    env_file:
+      - .env.docker.local
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/kantina
-      JWT_SECRET: ${JWT_SECRET:-kantina-secret}
+      NODE_ENV: development
+      DEBUG: 'prisma:*'
+      LOG_LEVEL: debug
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
     profiles: ['local-db']
 
   db:
@@ -25,10 +32,16 @@ services:
       POSTGRES_DB: kantina
       POSTGRES_USER: postgres
     ports:
-      - '5432:5432'
+      - '15432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/init:/docker-entrypoint-initdb.d
+      # - ./docker/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d kantina']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     profiles: ['local-db']
 
   migrator:
@@ -39,46 +52,26 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/kantina
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     profiles: ['local-db']
 
-  api-neon:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
-    container_name: kantina-api-neon
-    ports:
-      - '3000:8080'
+  seed:
+    image: postgres:16
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET:-kantina-secret}
-    profiles: ['neon']
-
-  bootstrap:
-    image: curlimages/curl:8.6.0
+      PGPASSWORD: postgres
     depends_on:
-      - db
-      - api
-    environment:
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@local}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
-    command: >
-      sh -lc '
-        echo "Waiting API...";
-        until curl -fsS http://api:8080/health >/dev/null; do sleep 1; done;
-
-        echo "Creating admin (if not exists)...";
-        curl -fsS -X POST http://api:8080/auth/register \
-          -H "Content-Type: application/json" \
-          -H "x-tenant: default" \
-          -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" \
-        || true;
-
-        echo "Bootstrap done.";
-      '
-    profiles:
-      - local-db
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    command:
+      - sh
+      - -lc
+      - |
+        psql -h db -U postgres -d kantina -v ON_ERROR_STOP=1 \
+          -c "INSERT INTO \"Tenant\" (\"id\",\"name\") VALUES ('default','default') ON CONFLICT (\"id\") DO NOTHING;"
+    profiles: ['local-db']
 
 volumes:
   pgdata:

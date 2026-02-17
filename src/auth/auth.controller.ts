@@ -1,27 +1,46 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
-import { ApiBody, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import { Body, Controller, Headers, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto';
-import { LoginDto } from './dto/login.dto';
 
-@ApiTags('Auth')
-@ApiSecurity('tenant')
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+
+class RefreshDto {
+  @IsString()
+  @IsNotEmpty()
+  refreshToken!: string;
+}
+
+class LoginDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(6)
+  password!: string;
+}
+
+class RegisterDto extends LoginDto {}
+
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly auth: AuthService) {}
 
   @Post('login')
-  @ApiBody({ type: LoginDto })
-  async login(@Req() req: Request, @Body() dto: LoginDto) {
-    const tenantId = req.tenantId as string;
-    return this.authService.login(dto.email, dto.password, tenantId);
+  login(@Headers('x-tenant') tenantId: string, @Body() dto: LoginDto) {
+    return this.auth.login(dto.email, dto.password, tenantId);
   }
 
   @Post('register')
-  @ApiBody({ type: RegisterDto })
-  async register(@Body() dto: RegisterDto, @Req() req: Request) {
-    const tenantId = req.tenantId as string;
-    return this.authService.register(dto.email, dto.password, tenantId);
+  register(@Headers('x-tenant') tenantId: string, @Body() dto: RegisterDto) {
+    return this.auth.register(dto.email, dto.password, tenantId);
+  }
+
+  @Post('refresh')
+  refresh(@Headers('x-tenant') tenantId: string, @Body() dto: RefreshDto) {
+    return this.auth.refresh(tenantId, dto.refreshToken);
+  }
+
+  @Post('logout')
+  logout(@Headers('x-tenant') tenantId: string, @Body() dto: RefreshDto) {
+    return this.auth.logout(tenantId, dto.refreshToken);
   }
 }

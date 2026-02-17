@@ -40,7 +40,9 @@ export class JwtAuthGuard implements CanActivate {
     let payload: JwtPayload;
     try {
       // Tipamos o retorno do verify para evitar `any`
-      payload = this.jwt.verify<JwtPayload>(token);
+      payload = this.jwt.verify<JwtPayload>(token, {
+        secret: process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET,
+      });
     } catch {
       throw new UnauthorizedException('Invalid token');
     }

@@ -1,24 +1,41 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import type { Request, Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
-    const request = ctx.getRequest();
+    const res = ctx.getResponse<Response>();
+    const req = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const isHttp = exception instanceof HttpException;
 
-    const payload =
-      exception instanceof HttpException
-        ? (exception.getResponse() as unknown)
-        : { message: 'Internal server error' };
+    const status = isHttp ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    response.status(status).json({
+    const responseBody = isHttp ? exception.getResponse() : null;
+
+    const message =
+      typeof responseBody === 'string'
+        ? responseBody
+        : ((responseBody as any)?.message ??
+          (exception as any)?.message ??
+          'Internal server error');
+
+    const error =
+      typeof responseBody === 'object'
+        ? ((responseBody as any)?.error ?? (exception as any)?.name)
+        : ((exception as any)?.name ?? 'Error');
+
+    if (!isHttp) {
+      console.error('Unhandled exception:', exception);
+    }
+
+    res.status(status).json({
       statusCode: status,
-      path: request.url,
-      ...(typeof payload === 'object' && payload ? payload : { message: String(payload) }),
+      path: req.url,
+      message,
+      error,
+      requestId: (req as any).id,
     });
   }
 }
