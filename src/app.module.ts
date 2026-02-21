@@ -1,9 +1,10 @@
-import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core/constants';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CategoriesService } from './categories/categories.service';
@@ -11,7 +12,9 @@ import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma.module';
 import { ReportsModule } from './reports/reports.module';
+import { StudentsModule } from './students/students.module';
 import { TenantMiddleware } from './tenant.middleware';
+import { TenantsModule } from './tenants/tenants.module';
 import { TestsModule } from './tests/tests.module';
 import { WalletsModule } from './wallets/wallets.module';
 
@@ -24,6 +27,8 @@ import { WalletsModule } from './wallets/wallets.module';
     WalletsModule,
     OrdersModule,
     ReportsModule,
+    StudentsModule,
+    TenantsModule,
     ThrottlerModule.forRoot([
       {
         ttl: 15 * 60 * 1000,
@@ -38,6 +43,6 @@ import { WalletsModule } from './wallets/wallets.module';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantMiddleware).forRoutes({ path: 'auth/(.*)', method: RequestMethod.ALL });
+    consumer.apply(TenantMiddleware).forRoutes(AuthController);
   }
 }

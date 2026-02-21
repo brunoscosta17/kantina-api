@@ -9,9 +9,9 @@ const prisma = new PrismaClient();
 async function main() {
   // 1) Cria um novo tenant de demo (ou reaproveita se já existir)
   const tenant = await prisma.tenant.upsert({
-    where: { name: 'Escola Kantina Demo' },
-    update: {},
-    create: { name: 'Escola Kantina Demo' },
+    where: { id: 'demo' },
+    update: { name: 'Escola Kantina Demo', code: '000000' },
+    create: { id: 'demo', name: 'Escola Kantina Demo', code: '000000' },
   });
 
   // 2) Usuários (roles variados)
@@ -213,9 +213,43 @@ async function main() {
     }
   }
 
+  const aluno = await prisma.student.upsert({
+    where: {
+      tenantId_name_classroom: {
+        tenantId: tenant.id,
+        name: 'Aluno Demo',
+        classroom: '6ºA',
+      },
+    },
+    update: {},
+    create: { tenantId: tenant.id, name: 'Aluno Demo', classroom: '6ºA' },
+  });
+
+  await prisma.user.upsert({
+    where: {
+      tenantId_email: {
+        tenantId: tenant.id,
+        email: 'aluno@demo.com',
+      },
+    },
+    update: {
+      role: 'ALUNO',
+      studentId: aluno.id,
+      isActive: true,
+    },
+    create: {
+      tenantId: tenant.id,
+      email: 'aluno@demo.com',
+      password: await bcrypt.hash('admin123', 10),
+      role: 'ALUNO',
+      studentId: aluno.id,
+    },
+  });
+
   console.log('Seed DEMO OK');
   console.log('TENANT_ID=', tenant.id);
   console.log('Login como: admin@demo.com / admin123');
+  console.log('Login como: aluno@demo.com / admin123');
 }
 
 main()

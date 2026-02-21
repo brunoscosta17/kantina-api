@@ -12,11 +12,13 @@ enum Role {
   GESTOR
   OPERADOR
   RESPONSAVEL
+  ALUNO
 }
 
 model Tenant {
   id        String   @id @default(uuid())
-  name      String   @unique
+  name      String
+  code      String   @unique // <- novo (6 ou 8 dígitos)
   createdAt DateTime @default(now())
 
   users      User[]
@@ -36,9 +38,11 @@ model User {
   email    String
   password String
   role     Role
-
-  // novo:
   isActive Boolean @default(true)
+
+  // FK para Student — precisa ser UNIQUE para 1:1
+  studentId String? @unique
+  student   Student? @relation(fields: [studentId], references: [id])
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
@@ -52,15 +56,14 @@ model Student {
   id       String @id @default(uuid())
   tenantId String
   name     String
+  classroom String?
 
-  // deixar opcional para casar com dto.classroom ?? null:
-  classroom String? // <= era obrigatório; torna-se opcional
+  user User?
 
   tenant Tenant  @relation(fields: [tenantId], references: [id])
   Wallet Wallet?
   Order  Order[]
 
-  // mantém o unique composto; Postgres permite múltiplos NULLs
   @@unique([tenantId, name, classroom], name: "tenantId_name_classroom")
   @@map("Student")
 }

@@ -7,22 +7,21 @@ assertSeedIsAllowed('default');
 const prisma = new PrismaClient();
 
 async function main() {
+  // src/prisma/seed.ts
   const tenant = await prisma.tenant.upsert({
-    where: { name: 'Escola Demo' },
-    update: {},
-    create: { name: 'Escola Demo' },
+    where: { id: 'default' }, // id é unique
+    update: { name: 'default', code: '000000' },
+    create: { id: 'default', name: 'default', code: '000000' },
   });
+
   const password = await bcrypt.hash('admin123', 10);
 
+  const adminEmail = 'admin@local.com';
+
   await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: 'admin@demo.com' } },
+    where: { tenantId_email: { tenantId: tenant.id, email: adminEmail } },
     update: { password },
-    create: {
-      tenantId: tenant.id,
-      email: 'admin@demo.com',
-      password,
-      role: Role.ADMIN,
-    },
+    create: { tenantId: tenant.id, email: adminEmail, password, role: Role.ADMIN },
   });
 
   const cat1 = await prisma.category.upsert({

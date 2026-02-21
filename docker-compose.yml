@@ -57,20 +57,22 @@ services:
     profiles: ['local-db']
 
   seed:
-    image: postgres:16
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrate
+    env_file:
+      - .env.docker.local
     environment:
-      PGPASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/kantina
+      SEED_MODE: DEMO
+      NODE_ENV: development
     depends_on:
       db:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
-    command:
-      - sh
-      - -lc
-      - |
-        psql -h db -U postgres -d kantina -v ON_ERROR_STOP=1 \
-          -c "INSERT INTO \"Tenant\" (\"id\",\"name\") VALUES ('default','default') ON CONFLICT (\"id\") DO NOTHING;"
+    command: ['pnpm', 'db:seed:demo']
     profiles: ['local-db']
 
 volumes:

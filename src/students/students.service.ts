@@ -1,19 +1,29 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from './../prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentsDto } from './dto/query-students.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Injectable()
 export class StudentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(tenantId: string, dto: CreateStudentDto) {
-    const { name, classroom } = dto;
-    return this.prisma.student.create({
-      data: { tenantId, name, classroom: classroom ?? null },
-    });
+    try {
+      return await this.prisma.student.create({
+        data: {
+          tenantId,
+          name: dto.name.trim(),
+          classroom: dto.classroom?.trim() || null,
+        },
+      });
+    } catch (e: any) {
+      // unique: tenantId_name_classroom
+      if (e?.code === 'P2002') {
+        throw new ConflictException('Student already exists for this tenant/classroom');
+      }
+      throw e;
+    }
   }
 
   async list(tenantId: string, q: QueryStudentsDto) {
@@ -21,8 +31,7 @@ export class StudentsService {
     const pageSize = q.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
 
-    // ✅ tipagem explícita
-    const where: Prisma.StudentWhereInput = { tenantId };
+    const where: any = { tenantId };
     if (q.q) where.name = { contains: q.q, mode: 'insensitive' };
     if (q.classroom) where.classroom = q.classroom;
 
@@ -45,28 +54,69 @@ export class StudentsService {
     return s;
   }
 
-  async update(tenantId: string, id: string, dto: UpdateStudentDto) {
-    await this.ensureExists(tenantId, id);
-    const { name, classroom } = dto;
-    return this.prisma.student.update({
-      where: { id },
-      data: { name, classroom: classroom ?? null },
+  async getById(tenantId: string, id: string) {
+    const student = await this.prisma.student.findFirst({
+      where: { tenantId, id },
+      select: {
+        id: true,
+        name: true,
+        classroom: true,
+      },
     });
+
+    if (!student) throw new NotFoundException('Student not found');
+    return student;
+  }
+
+  async update(tenantId: string, id: string, dto: UpdateStudentDto) {
+    // garante que pertence ao tenant
+    await this.getById(tenantId, id);
+
+    try {
+      return await this.prisma.student.update({
+        where: { id },
+        data: {
+          name: dto.name?.trim(),
+          classroom: dto.classroom === undefined ? undefined : dto.classroom?.trim() || null,
+        },
+        select: { id: true, name: true, classroom: true },
+      });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException('Student already exists for this tenant/classroom');
+      }
+      throw e;
+    }
   }
 
   async remove(tenantId: string, id: string) {
-    // Se tiver wallet/pedidos, você pode optar por soft-delete.
-    const wallet = await this.prisma.wallet.findFirst({ where: { tenantId, studentId: id } });
-    if (wallet) {
-      throw new BadRequestException('Cannot delete student with wallet. Remove wallet first.');
-    }
-    await this.ensureExists(tenantId, id);
+    // garante tenant
+    await this.getById(tenantId, id);
+
+    // se existir wallet, você pode escolher:
+    // - bloquear delete, ou
+    // - deletar wallet primeiro
+    // Vou deletar wallet antes para evitar erro de FK.
+    await this.prisma.wallet.deleteMany({ where: { tenantId, studentId: id } });
+
     await this.prisma.student.delete({ where: { id } });
     return { ok: true };
   }
 
-  private async ensureExists(tenantId: string, id: string) {
-    const exists = await this.prisma.student.findFirst({ where: { id, tenantId } });
-    if (!exists) throw new NotFoundException('Student not found');
+  async getWallet(tenantId: string, studentId: string) {
+    // garante tenant
+    await this.getById(tenantId, studentId);
+
+    const wallet = await this.prisma.wallet.findFirst({
+      where: { tenantId, studentId },
+      select: {
+        id: true,
+        studentId: true,
+        balanceCents: true,
+      },
+    });
+
+    if (!wallet) throw new NotFoundException('Wallet not found');
+    return wallet;
   }
 }

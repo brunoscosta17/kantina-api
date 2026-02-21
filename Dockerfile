@@ -34,11 +34,13 @@ WORKDIR /app
 # precisa dos arquivos do prisma + config para rodar migrations
 COPY package.json pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY prisma.config.ts ./prisma.config.ts
+# COPY prisma.config.ts ./prisma.config.ts
 COPY src ./src
 
 # instala com devDependencies (prisma CLI fica disponível)
 RUN pnpm install --frozen-lockfile
+
+RUN pnpm exec prisma generate --schema=src/prisma/schema.prisma
 
 # (opcional) gerar client não é obrigatório para migrate, mas não atrapalha
 # RUN pnpm exec prisma generate --schema=src/prisma/schema.prisma
