@@ -6,14 +6,48 @@ assertSeedIsAllowed('demo');
 
 const prisma = new PrismaClient();
 
+function genTenantCode6Digits(): string {
+  return Math.floor(Math.random() * 1_000_000)
+    .toString()
+    .padStart(6, '0');
+}
+
+async function upsertTenantWithNumericCode(params: { id: string; name: string }) {
+  const existing = await prisma.tenant.findUnique({ where: { id: params.id } });
+
+  // Se já existe: garante que fica válido (6 dígitos numéricos)
+  if (existing) {
+    const needsFix = !/^\d{6}$/.test(existing.code ?? '');
+    return prisma.tenant.update({
+      where: { id: params.id },
+      data: {
+        name: params.name,
+        ...(needsFix ? { code: genTenantCode6Digits() } : {}),
+      },
+    });
+  }
+
+  // Se não existe: cria tentando até não colidir no @unique
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const code = genTenantCode6Digits();
+
+    try {
+      return await prisma.tenant.create({
+        data: { id: params.id, name: params.name, code },
+      });
+    } catch (e: any) {
+      // P2002 = violou unique (provavelmente Tenant.code)
+      if (e?.code === 'P2002') continue;
+      throw e;
+    }
+  }
+
+  throw new Error('Não consegui gerar um Tenant.code único após várias tentativas.');
+}
 async function main() {
   // 1) Cria um novo tenant de demo (ou reaproveita se já existir)
-  const tenant = await prisma.tenant.upsert({
-    where: { id: 'demo' },
-    update: { name: 'Escola Kantina Demo', code: '000000' },
-    create: { id: 'demo', name: 'Escola Kantina Demo', code: '000000' },
-  });
-
+  const tenant = await upsertTenantWithNumericCode({ id: 'demo', name: 'Escola Kantina Demo' });
+  console.log('TENANT_CODE=', tenant.code);
   // 2) Usuários (roles variados)
   const password = await bcrypt.hash('admin123', 10);
   await prisma.user.createMany({

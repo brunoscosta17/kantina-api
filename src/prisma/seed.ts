@@ -5,15 +5,48 @@ import { assertSeedIsAllowed } from './seed.guard';
 assertSeedIsAllowed('default');
 
 const prisma = new PrismaClient();
+function genTenantCode6Digits(): string {
+  // 0..999999 => "000000".."999999"
+  return Math.floor(Math.random() * 1_000_000)
+    .toString()
+    .padStart(6, '0');
+}
+
+async function upsertTenantWithNumericCode(params: { id: string; name: string }) {
+  // Se já existir, mantém id/name e garante code numérico (se estiver inválido)
+  const existing = await prisma.tenant.findUnique({ where: { id: params.id } });
+
+  if (existing) {
+    const needsFix = !/^\d{6}$/.test(existing.code ?? '');
+    return prisma.tenant.update({
+      where: { id: params.id },
+      data: {
+        name: params.name,
+        ...(needsFix ? { code: genTenantCode6Digits() } : {}),
+      },
+    });
+  }
+
+  // Se não existir, cria com code numérico e trata colisão
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const code = genTenantCode6Digits();
+    try {
+      return await prisma.tenant.create({
+        data: { id: params.id, name: params.name, code },
+      });
+    } catch (e: any) {
+      // P2002 = Unique constraint failed
+      if (e?.code === 'P2002') continue;
+      throw e;
+    }
+  }
+
+  throw new Error('Falha ao gerar tenant code único após várias tentativas.');
+}
 
 async function main() {
-  // src/prisma/seed.ts
-  const tenant = await prisma.tenant.upsert({
-    where: { id: 'default' }, // id é unique
-    update: { name: 'default', code: '000000' },
-    create: { id: 'default', name: 'default', code: '000000' },
-  });
-
+  const tenant = await upsertTenantWithNumericCode({ id: 'default', name: 'default' });
+  console.log('TENANT_CODE=', tenant.code);
   const password = await bcrypt.hash('admin123', 10);
 
   const adminEmail = 'admin@local.com';
