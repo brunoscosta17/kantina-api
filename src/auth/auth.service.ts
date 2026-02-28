@@ -123,20 +123,53 @@ export class AuthService {
   async getAlunosDoResponsavel(responsavelId: string) {
     return this.prisma.studentOnResponsavel.findMany({
       where: { responsavelId },
-      include: { student: true },
-    }).then(list => list.map(l => l.student));
+      include: {
+        student: {
+          include: {
+            Wallet: true,
+            tenant: true,
+          },
+        },
+      },
+    }).then(list => list.map(l => {
+      const s = l.student;
+      return {
+        id: s.id,
+        name: s.name,
+        classroom: s.classroom,
+        tenant: s.tenant ? { name: s.tenant.name, id: s.tenant.id } : undefined,
+        wallet: s.Wallet ? { balanceCents: s.Wallet.balanceCents, id: s.Wallet.id } : undefined,
+      };
+    }));
   }
     async getWalletsOfResponsible(responsavelId: string) {
       // Busca os alunos vinculados
       const alunos = await this.prisma.studentOnResponsavel.findMany({
         where: { responsavelId },
-        include: { student: true },
+        include: {
+          student: {
+            include: {
+              tenant: true,
+            },
+          },
+        },
       });
       const studentIds = alunos.map(a => a.student.id);
       // Busca as carteiras desses alunos
-      return this.prisma.wallet.findMany({
+      const wallets = await this.prisma.wallet.findMany({
         where: { studentId: { in: studentIds } },
         include: { student: true },
+      });
+      // Adiciona tenant (escola) ao objeto student de cada wallet
+      return wallets.map(w => {
+        const aluno = alunos.find(a => a.student.id === w.studentId)?.student;
+        return {
+          ...w,
+          student: {
+            ...w.student,
+            tenant: aluno?.tenant ? { name: aluno.tenant.name, id: aluno.tenant.id } : undefined,
+          },
+        };
       });
     }
 }
