@@ -1,8 +1,9 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -26,5 +27,15 @@ export class AuthController {
   @Post('logout')
   logout(@Req() req: Request, @Body() dto: RefreshDto) {
     return this.auth.logout(req.tenantId!, dto.refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/alunos')
+  async getAlunosDoResponsavel(@Req() req: Request) {
+    const user = req.user as any;
+    if (user.role !== 'RESPONSAVEL') {
+      return [];
+    }
+    return this.auth.getAlunosDoResponsavel(user.id);
   }
 }

@@ -143,7 +143,13 @@
 ## Verificar tenants
 
 - no prompt do Postgres, digite:
-  SELECT \* FROM "Tenant";
+- SELECT \* FROM "Tenant";
+
+## Verificar os users
+
+- SELECT u.email, u.role, u."tenantId", t.code AS "schoolCode"
+  FROM "User" u
+  LEFT JOIN "Tenant" t ON u."tenantId" = t.id;
 
 ## Passo a passo para refletir a alterações e testar novamente
 
@@ -199,8 +205,8 @@ Se quiser rodar só a API sem Docker, use:
 ## Aqui está o resumo dos comandos para o seu projeto kantina-api:
 
 1. Subir Docker do zero (apaga banco e gera nova seed demo):
-   - pnpm dev:docker:down # Para e remove containers e volumes (apaga banco)
-   - pnpm dev:docker:up # Sobe tudo, recria banco e roda seed demo automaticamente
+   pnpm dev:docker:down
+   pnpm dev:docker:up
 
 Ou equivalente:
 
@@ -213,3 +219,12 @@ Ou equivalente:
 Ou equivalente:
 
 - docker compose --profile local-db up --build
+
+## Exemplos de usuários e roles
+
+admin@demo.com | ADMIN | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
+gestor@demo.com | GESTOR | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
+operador@demo.com | OPERADOR | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
+resp1@demo.com | RESPONSAVEL | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
+resp2@demo.com | RESPONSAVEL | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
+aluno@demo.com | ALUNO | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a

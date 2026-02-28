@@ -50,18 +50,33 @@ async function main() {
   console.log('TENANT_CODE=', tenant.code);
   // 2) Usuários (roles variados)
   const password = await bcrypt.hash('admin123', 10);
+  // Cria responsáveis
+  const responsaveis = await prisma.$transaction([
+    prisma.user.upsert({
+      where: { tenantId_email: { tenantId: tenant.id, email: 'resp1@demo.com' } },
+      update: {},
+      create: { tenantId: tenant.id, email: 'resp1@demo.com', password, role: 'RESPONSAVEL' },
+    }),
+    prisma.user.upsert({
+      where: { tenantId_email: { tenantId: tenant.id, email: 'resp2@demo.com' } },
+      update: {},
+      create: { tenantId: tenant.id, email: 'resp2@demo.com', password, role: 'RESPONSAVEL' },
+    }),
+  ]);
+
   await prisma.user.createMany({
     data: [
       { tenantId: tenant.id, email: 'admin@demo.com', password, role: 'ADMIN' },
       { tenantId: tenant.id, email: 'gestor@demo.com', password, role: 'GESTOR' },
       { tenantId: tenant.id, email: 'operador@demo.com', password, role: 'OPERADOR' },
-      { tenantId: tenant.id, email: 'resp1@demo.com', password, role: 'RESPONSAVEL' },
-      { tenantId: tenant.id, email: 'resp2@demo.com', password, role: 'RESPONSAVEL' },
     ],
     skipDuplicates: true,
   });
 
   // 3) Categorias
+  await prisma.orderItem.deleteMany({});
+  await prisma.catalogItem.deleteMany({ where: { tenantId: tenant.id } });
+  await prisma.category.deleteMany({ where: { tenantId: tenant.id } });
   const cats = await prisma.$transaction([
     prisma.category.create({ data: { tenantId: tenant.id, name: 'Almoço', sortOrder: 1 } }),
     prisma.category.create({ data: { tenantId: tenant.id, name: 'Lanches', sortOrder: 2 } }),
@@ -127,14 +142,34 @@ async function main() {
   const items = await prisma.catalogItem.findMany({ where: { tenantId: tenant.id } });
 
   // 5) Alunos + carteiras
+  await prisma.walletTransaction.deleteMany({ where: { tenantId: tenant.id } });
+  await prisma.wallet.deleteMany({ where: { tenantId: tenant.id } });
+  await prisma.order.deleteMany({ where: { tenantId: tenant.id } });
+  await prisma.studentOnResponsavel.deleteMany({
+    where: {
+      student: {
+        tenantId: tenant.id
+      }
+    }
+  });
+  await prisma.student.deleteMany({ where: { tenantId: tenant.id } });
   const alunos = await prisma.$transaction([
     prisma.student.create({ data: { tenantId: tenant.id, name: 'Ana Souza', classroom: '6ºA' } }),
     prisma.student.create({ data: { tenantId: tenant.id, name: 'Bruno Lima', classroom: '6ºB' } }),
-    prisma.student.create({
-      data: { tenantId: tenant.id, name: 'Carlos Nunes', classroom: '7ºA' },
-    }),
+    prisma.student.create({ data: { tenantId: tenant.id, name: 'Carlos Nunes', classroom: '7ºA' } }),
     prisma.student.create({ data: { tenantId: tenant.id, name: 'Duda Castro', classroom: '7ºB' } }),
   ]);
+
+  // Vincular alunos aos responsáveis
+  await prisma.studentOnResponsavel.createMany({
+    data: [
+      { responsavelId: responsaveis[0].id, studentId: alunos[0].id }, // resp1 -> Ana Souza
+      { responsavelId: responsaveis[0].id, studentId: alunos[1].id }, // resp1 -> Bruno Lima
+      { responsavelId: responsaveis[1].id, studentId: alunos[2].id }, // resp2 -> Carlos Nunes
+      { responsavelId: responsaveis[1].id, studentId: alunos[3].id }, // resp2 -> Duda Castro
+    ],
+    skipDuplicates: true,
+  });
 
   await prisma.wallet.createMany({
     data: [

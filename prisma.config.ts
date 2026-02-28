@@ -1,5 +1,3 @@
-import { defineConfig } from '@prisma/config';
-export default defineConfig({
+export default {
   schema: 'src/prisma/schema.prisma',
-  seeds: { type: 'ts-node', files: [] },
-});
+};

@@ -48,6 +48,9 @@ model User {
 
   refreshTokens RefreshToken[]
 
+  // Relação muitos-para-muitos com alunos
+  alunosVinculados StudentOnResponsavel[]
+
   @@unique([tenantId, email], name: "tenantId_email")
   @@map("User")
 }
@@ -64,8 +67,18 @@ model Student {
   Wallet Wallet?
   Order  Order[]
 
+  // Relação muitos-para-muitos com responsáveis
+  responsaveis StudentOnResponsavel[]
+
   @@unique([tenantId, name, classroom], name: "tenantId_name_classroom")
   @@map("Student")
+}
+model StudentOnResponsavel {
+  responsavelId String
+  studentId     String
+  responsavel   User    @relation(fields: [responsavelId], references: [id])
+  student       Student @relation(fields: [studentId], references: [id])
+  @@id([responsavelId, studentId])
 }
 
 model Wallet {

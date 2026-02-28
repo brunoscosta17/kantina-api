@@ -119,4 +119,11 @@ export class AuthService {
 
     return { ok: true };
   }
+
+  async getAlunosDoResponsavel(responsavelId: string) {
+    return this.prisma.studentOnResponsavel.findMany({
+      where: { responsavelId },
+      include: { student: true },
+    }).then(list => list.map(l => l.student));
+  }
 }
