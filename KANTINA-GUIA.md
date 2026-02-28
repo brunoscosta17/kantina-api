@@ -160,3 +160,51 @@
 4. Verificar o tenant no banco
    - docker compose exec db psql -U postgres -d kantina
    - SELECT \* FROM "Tenant";
+
+## Buildar o projeto sem apagar banco e gerar novo seed
+
+- 1.  Subir o banco de dados e a API (backend) com Docker:
+
+  Abra o terminal e execute:
+
+  cd c:/projects/kantina/kantina-api
+  pnpm dev:docker:up
+
+Isso irá:
+
+Subir o banco de dados Postgres (serviço db)
+Subir a API (serviço api)
+Rodar as migrations e seed demo (apenas na primeira vez, não apaga dados existentes)
+
+- 2.  Iniciar o frontend (app):
+
+  Abra outro terminal e execute:
+  - cd c:/projects/kantina/kantina-app pnpm start
+
+## Parar o e subir Docker, apagando o banco e gerando nova seed:
+
+- pnpm dev:docker:down
+
+- pnpm dev:docker:up
+
+Se quiser rodar só a API sem Docker, use:
+
+- pnpm start:dev
+
+## Aqui está o resumo dos comandos para o seu projeto kantina-api:
+
+1. Subir Docker do zero (apaga banco e gera nova seed demo):
+   - pnpm dev:docker:down # Para e remove containers e volumes (apaga banco)
+   - pnpm dev:docker:up # Sobe tudo, recria banco e roda seed demo automaticamente
+
+Ou equivalente:
+
+- docker compose --profile local-db down -v
+- docker compose --profile local-db up --build
+
+2. Rodar a API e o banco normalmente (sem apagar banco, sem gerar nova seed):
+   - pnpm dev:docker:up # Sobe API e banco, mantém dados existentes
+
+Ou equivalente:
+
+- docker compose --profile local-db up --build
