@@ -126,4 +126,17 @@ export class AuthService {
       include: { student: true },
     }).then(list => list.map(l => l.student));
   }
+    async getWalletsOfResponsible(responsavelId: string) {
+      // Busca os alunos vinculados
+      const alunos = await this.prisma.studentOnResponsavel.findMany({
+        where: { responsavelId },
+        include: { student: true },
+      });
+      const studentIds = alunos.map(a => a.student.id);
+      // Busca as carteiras desses alunos
+      return this.prisma.wallet.findMany({
+        where: { studentId: { in: studentIds } },
+        include: { student: true },
+      });
+    }
 }

@@ -38,4 +38,13 @@ export class AuthController {
     }
     return this.auth.getAlunosDoResponsavel(user.id);
   }
+  @UseGuards(JwtAuthGuard)
+  @Get('me/wallets')
+  async getWalletsOfResponsible(@Req() req: Request) {
+    const user = req.user as any;
+    if (user.role !== 'RESPONSAVEL') {
+      return [];
+    }
+    return this.auth.getWalletsOfResponsible(user.id);
+  }
 }
