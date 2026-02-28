@@ -30,6 +30,7 @@
      - Subir a API em `http://localhost:3000`
 
 3. **Para ambiente limpo:**
+
    ```bash
    docker compose --profile local-db down -v
    docker compose --profile local-db up --build
@@ -50,6 +51,7 @@
    pnpm install
    ```
 2. **Inicie o Expo Web:**
+
    ```bash
    pnpm expo start --web
    ```
@@ -79,6 +81,33 @@
    docker run -p 3000:8080 --env-file .env kantina-api
    ```
 
+### Hospedagem na Vercel
+
+1. **Deploy do backend na Vercel:**
+   - O projeto já está preparado para funcionar como Serverless Function (ver arquivo `src/vercel.ts`).
+   - Configure as variáveis de ambiente no painel da Vercel:
+     - `NODE_ENV=production`
+     - `DATABASE_URL` (exemplo NeonDB ou outro Postgres gerenciado)
+     - `JWT_SECRET` (segredo JWT)
+     - `FRONTEND_ORIGINS` (origens permitidas do frontend)
+     - `SWAGGER_BASE_URL` (opcional, para documentação)
+   - O endpoint será algo como `https://<seu-projeto>.vercel.app/api`.
+   - Para rotas protegidas, use o header `x-tenant` e o token JWT normalmente.
+
+2. **Deploy do frontend na Vercel:**
+   - Faça o build do app web:
+     ```bash
+     pnpm expo build:web
+     ```
+   - Suba a pasta `web-build` como projeto estático na Vercel.
+   - Configure as variáveis de ambiente do frontend conforme necessário.
+
+3. **Dicas Vercel:**
+   - Use o painel de logs da Vercel para depuração.
+   - Garanta que as variáveis de ambiente estejam corretas para produção.
+   - Para banco NeonDB, use a string de conexão com `sslmode=require`.
+   - Documentação Swagger pode ser acessada via `SWAGGER_BASE_URL`.
+
 ### Frontend
 
 1. **Build do app para produção:**
@@ -105,3 +134,29 @@
 ---
 
 **Pronto! Com esse guia, você consegue rodar e testar o Kantina localmente e em produção de forma padronizada.**
+
+## Rodar o banco de dados localmente por prompt
+
+- dentro da pasta kantina-api, execute:
+  docker compose exec db psql -U postgres -d kantina
+
+## Verificar tenants
+
+- no prompt do Postgres, digite:
+  SELECT \* FROM "Tenant";
+
+## Passo a passo para refletir a alterações e testar novamente
+
+1. Parar e limpar o ambiente
+   - docker compose --profile local-db down -v
+
+2. Subir o ambiente
+   - docker compose --profile local-db up --build
+
+3. Rodar o seed demo ou seed em prod
+   - docker compose exec api pnpm dlx tsx prisma/seed.demo.ts
+   - docker compose exec api pnpm dlx tsx prisma/seed.ts
+
+4. Verificar o tenant no banco
+   - docker compose exec db psql -U postgres -d kantina
+   - SELECT \* FROM "Tenant";

@@ -46,7 +46,7 @@ async function upsertTenantWithNumericCode(params: { id: string; name: string })
 }
 async function main() {
   // 1) Cria um novo tenant de demo (ou reaproveita se já existir)
-  const tenant = await upsertTenantWithNumericCode({ id: 'demo', name: 'Escola Kantina Demo' });
+  const tenant = await upsertTenantWithNumericCode({ id: '77abd4e8-76a2-4bd7-ab93-c112886c218a', name: 'Escola Kantina Demo' });
   console.log('TENANT_CODE=', tenant.code);
   // 2) Usuários (roles variados)
   const password = await bcrypt.hash('admin123', 10);
