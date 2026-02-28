@@ -48,6 +48,7 @@ export class AuthService {
       refreshToken,
       tokenType: 'Bearer',
       expiresIn: 900, // 15 min (mantém compatível com seu retorno atual)
+      role: params.role,
     };
   }
 

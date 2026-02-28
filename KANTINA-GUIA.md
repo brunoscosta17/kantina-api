@@ -187,6 +187,11 @@ Rodar as migrations e seed demo (apenas na primeira vez, não apaga dados existe
 
 - pnpm dev:docker:up
 
+ou
+
+docker compose --profile local-db down -v
+docker compose --profile local-db up -d --build
+
 Se quiser rodar só a API sem Docker, use:
 
 - pnpm start:dev
