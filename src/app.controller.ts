@@ -112,4 +112,91 @@ export class AppController {
       };
     }
   }
+
+  // Endpoint para criar usuários de teste com diferentes perfis
+  @Post('create-test-users')
+  async createTestUsers() {
+    try {
+      // Busca o primeiro tenant disponível (ou você pode passar o código como parâmetro)
+      const tenant = await this.prisma.tenant.findFirst();
+
+      if (!tenant) {
+        return {
+          success: false,
+          error: 'No tenant found. Create a tenant first using /create-demo-data',
+        };
+      }
+
+      const testUsers = [
+        {
+          email: 'gestor@demo.com',
+          role: 'GESTOR',
+          name: 'João Gestor',
+        },
+        {
+          email: 'operador@demo.com',
+          role: 'OPERADOR',
+          name: 'Maria Operadora',
+        },
+        {
+          email: 'responsavel@demo.com',
+          role: 'RESPONSAVEL',
+          name: 'Carlos Responsável',
+        },
+        {
+          email: 'aluno@demo.com',
+          role: 'ALUNO',
+          name: 'Ana Aluna',
+        },
+      ];
+
+      const password = await bcrypt.hash('demo123', 10);
+      const createdUsers = [];
+
+      for (const userData of testUsers) {
+        // Verifica se o usuário já existe
+        const existingUser = await this.prisma.user.findFirst({
+          where: {
+            tenantId: tenant.id,
+            email: userData.email,
+          },
+        });
+
+        if (!existingUser) {
+          const user = await this.prisma.user.create({
+            data: {
+              tenantId: tenant.id,
+              email: userData.email,
+              password,
+              role: userData.role as any,
+              isActive: true,
+            },
+          });
+
+          createdUsers.push({
+            email: userData.email,
+            role: userData.role,
+            name: userData.name,
+            password: 'demo123',
+          });
+        }
+      }
+
+      return {
+        success: true,
+        tenant: {
+          id: tenant.id,
+          code: tenant.code,
+          name: tenant.name,
+        },
+        users: createdUsers,
+        message: `Created ${createdUsers.length} test users. Use tenant code ${tenant.code} to login with any of the users above.`,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
 }
