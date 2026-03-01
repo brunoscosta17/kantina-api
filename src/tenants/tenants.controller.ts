@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { ResolveTenantDto } from './dto/resolve-tenant.dto';
 import { TenantsService } from './tenants.service';
 

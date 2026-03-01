@@ -26,8 +26,7 @@ export class AuthService {
     const payload = { sub: params.userId, tid: params.tenantId, role: params.role };
 
     const accessToken = await this.jwt.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET,
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+      expiresIn: '900s',
     });
 
     // refresh token opaco
