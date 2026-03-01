@@ -15,6 +15,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  // Endpoint para criar dados demo na produção
   @Post('create-demo-data')
   async createDemoData() {
     try {
