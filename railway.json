@@ -2,10 +2,10 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "pnpm install && echo 'Starting Prisma migrations...' && pnpm exec prisma migrate deploy --schema=src/prisma/schema.prisma && echo 'Migrations completed!' && pnpm run build"
+    "buildCommand": "pnpm install && echo 'DATABASE_URL available:' && echo $DATABASE_URL && echo 'Starting Prisma migrations...' && pnpm exec prisma migrate deploy --schema=src/prisma/schema.prisma && echo 'Migrations completed!' && pnpm exec prisma generate --schema=src/prisma/schema.prisma && pnpm run build"
   },
   "deploy": {
-    "startCommand": "pnpm run start:prod:migrate",
+    "startCommand": "node dist/main",
     "sleepApplication": false,
     "restartPolicyType": "ALWAYS"
   }
