@@ -6,8 +6,6 @@
   },
   "deploy": {
     "startCommand": "pnpm run start:prod",
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 120,
     "sleepApplication": false,
     "restartPolicyType": "ALWAYS"
   }
