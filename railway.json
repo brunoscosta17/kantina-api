@@ -5,7 +5,7 @@
     "buildCommand": "pnpm install && pnpm exec prisma migrate deploy --schema=src/prisma/schema.prisma && pnpm run build"
   },
   "deploy": {
-    "startCommand": "pnpm run start:prod:migrate",
+    "startCommand": "pnpm run start:prod",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 120,
     "sleepApplication": false,
