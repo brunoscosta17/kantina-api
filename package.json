@@ -32,7 +32,7 @@
     "db:seed": "tsx src/prisma/seed.ts",
     "db:seed:demo": "tsx src/prisma/seed.demo.ts",
     "seed:local": "tsx src/prisma/seed.ts",
-    "vercel-build": "nest build && prisma generate --schema=src/prisma/schema.prisma",
+    "vercel-build": "prisma generate --schema=src/prisma/schema.prisma && nest build",
     "migrate:env": "pnpm dlx dotenv-cli -e .env -- prisma migrate dev --name add-responsavel-aluno-relation --schema=src/prisma/schema.prisma"
   },
   "dependencies": {
