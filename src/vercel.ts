@@ -25,6 +25,9 @@ async function bootstrap(): Promise<void> {
     logger: ['error', 'warn', 'log'],
   });
 
+  // Configurar global prefix para evitar conflitos de roteamento
+  // app.setGlobalPrefix('api'); // Comentado pois já é tratado no Vercel
+
   app.enableCors({
     origin: parseOrigins(process.env.FRONTEND_ORIGINS),
     credentials: true,
