@@ -1,0 +1,30 @@
+# Dockerfile para Railway
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instalar pnpm
+RUN corepack enable
+
+# Copiar arquivos de dependências
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY src/prisma ./src/prisma
+
+# Instalar dependências
+RUN pnpm install --frozen-lockfile
+
+# Copiar código fonte
+COPY . .
+
+# Gerar Prisma client e buildar
+RUN pnpm exec prisma generate --schema=src/prisma/schema.prisma
+RUN pnpm run build
+
+# Limpar dev dependencies
+RUN pnpm prune --prod
+
+# Expor porta
+EXPOSE 8080
+
+# Comando de inicialização
+CMD ["pnpm", "run", "start:prod"]

@@ -422,7 +422,7 @@ export class AppController {
     }
   }
 
-  // Endpoint de login direto para compatibilidade com Vercel  
+  // Endpoint de login direto para compatibilidade com Vercel
   @Post('login')
   async login(
     @Headers('x-tenant') tenantCode: string,
