@@ -1,7 +1,8 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body, Headers } from '@nestjs/common';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 
 @Controller()
 export class AppController {
@@ -196,6 +197,95 @@ export class AppController {
         },
         users: createdUsers,
         message: `Created ${createdUsers.length} test users. Use tenant code ${tenant.code} to login with any of the users above.`,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Endpoint de teste para login direto (para teste no mobile)
+  @Post('test-login')
+  async testLogin(
+    @Headers('x-tenant') tenantCode: string,
+    @Body() body: { email: string; password: string },
+  ) {
+    try {
+      if (!tenantCode) {
+        return {
+          success: false,
+          error: 'Missing x-tenant header',
+        };
+      }
+
+      // Busca o tenant
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { code: tenantCode },
+      });
+
+      if (!tenant) {
+        return {
+          success: false,
+          error: 'Tenant not found',
+        };
+      }
+
+      // Busca o usuário
+      const user = await this.prisma.user.findUnique({
+        where: {
+          tenantId_email: {
+            tenantId: tenant.id,
+            email: body.email,
+          },
+        },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not found',
+        };
+      }
+
+      // Verifica senha
+      const validPassword = await bcrypt.compare(body.password, user.password);
+      if (!validPassword) {
+        return {
+          success: false,
+          error: 'Invalid password',
+        };
+      }
+
+      // Gera token JWT
+      const payload = {
+        sub: user.id,
+        tid: tenant.id,
+        role: user.role,
+      };
+
+      const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
+        expiresIn: '15m',
+      });
+
+      const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh-secret', {
+        expiresIn: '7d',
+      });
+
+      return {
+        success: true,
+        accessToken,
+        refreshToken,
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        role: user.role,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
       };
     } catch (error: any) {
       return {

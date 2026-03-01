@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste API Kantina</title>
+</head>
+<body>
+    <h1>Teste Create Demo Data</h1>
+    <button onclick="createDemoData()">Criar Dados Demo</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function createDemoData() {
+            try {
+                const response = await fetch('https://kantina-api.vercel.app/api/create-demo-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: '{}'
+                });
+
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Erro: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
