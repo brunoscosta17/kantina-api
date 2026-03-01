@@ -21,6 +21,13 @@ model Tenant {
   code      String   @unique // <- novo (6 ou 8 dígitos)
   createdAt DateTime @default(now())
 
+  pixProvider   String? // 'gerencianet' | 'mercadopago'
+  pixKey        String?
+  gerencianetClientId   String?
+  gerencianetClientSecret String?
+  mercadopagoAccessToken String?
+  mercadopagoPublicKey   String?
+
   users      User[]
   students   Student[]
   categories Category[]
