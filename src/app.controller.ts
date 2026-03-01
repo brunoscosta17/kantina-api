@@ -315,7 +315,7 @@ export class AppController {
           expiresIn: 900,
           role: user.role,
         };
-      } catch (error) {
+      } catch {
         return {
           statusCode: 401,
           message: 'Invalid refresh token',
