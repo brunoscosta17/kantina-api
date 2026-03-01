@@ -151,7 +151,12 @@ export class AppController {
       ];
 
       const password = await bcrypt.hash('demo123', 10);
-      const createdUsers = [];
+      const createdUsers: Array<{
+        email: string;
+        role: string;
+        name: string;
+        password: string;
+      }> = [];
 
       for (const userData of testUsers) {
         // Verifica se o usuário já existe
