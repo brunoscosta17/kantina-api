@@ -1,6 +1,6 @@
 import { Controller, Post } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 
 @Controller('tests')
@@ -10,7 +10,7 @@ export class TestsController {
   @Post('seed-demo')
   async seedDemo() {
     // 1) Cria tenant
-    const tenantId = uuid();
+    const tenantId = randomUUID();
 
     // 2) Cria admin
     const email = 'admin@demo.com';
