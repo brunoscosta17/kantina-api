@@ -64,6 +64,37 @@ export class AppController {
         },
       });
 
+      // Cria usuários de teste com diferentes roles
+      const testPassword = await bcrypt.hash('demo123', 10);
+      await this.prisma.user.createMany({
+        data: [
+          {
+            tenantId: tenant.id,
+            email: 'gestor@demo.com',
+            password: testPassword,
+            role: 'GESTOR',
+          },
+          {
+            tenantId: tenant.id,
+            email: 'operador@demo.com',
+            password: testPassword,
+            role: 'OPERADOR',
+          },
+          {
+            tenantId: tenant.id,
+            email: 'responsavel@demo.com',
+            password: testPassword,
+            role: 'RESPONSAVEL',
+          },
+          {
+            tenantId: tenant.id,
+            email: 'aluno@demo.com',
+            password: testPassword,
+            role: 'ALUNO',
+          },
+        ],
+      });
+
       // Cria categorias básicas
       const categoryAlmoco = await this.prisma.category.create({
         data: { tenantId: tenant.id, name: 'Almoço', sortOrder: 1 },
@@ -103,8 +134,12 @@ export class AppController {
         login: {
           email: 'admin@demo.com',
           password: 'admin123',
-        },
-        message: 'Demo data created successfully! Use the school code above to login.',
+        },        testUsers: [
+          { email: 'gestor@demo.com', password: 'demo123', role: 'GESTOR' },
+          { email: 'operador@demo.com', password: 'demo123', role: 'OPERADOR' },
+          { email: 'responsavel@demo.com', password: 'demo123', role: 'RESPONSAVEL' },
+          { email: 'aluno@demo.com', password: 'demo123', role: 'ALUNO' },
+        ],        message: 'Demo data created successfully! Use the school code above to login.',
       };
     } catch (error: any) {
       return {
