@@ -16,6 +16,15 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @Get('health')
+  getHealth() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    };
+  }
+
   // Endpoint para criar dados demo na produção
   @Post('create-demo-data')
   async createDemoData() {
