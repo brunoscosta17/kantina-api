@@ -280,3 +280,30 @@ LEFT JOIN "Wallet" w ON s.id = w."studentId";
 7. Para descobrir o código do tenant que foi gerado, você pode executar:
 
 cd /c/projects/Kantina/kantina-api && docker compose exec db psql -U postgres -d kantina -c "SELECT code, name FROM \"Tenant\";"
+
+## Migração para Railway
+Como o Flat Controller ainda não resolve o problema do Vercel, vou te preparar a migração para Railway que é a solução definitiva.
+
+Roadmap de Escalabilidade - Longo Prazo:
+
+📅 IMEDIATO (hoje):
+└── Railway (Deploy completo funcional)
+
+📅 3-6 MESES (crescimento):  
+├── Load Balancer + Multi-instâncias
+├── Redis Cache 
+└── CDN para assets
+
+📅 6-12 MESES (escala média):
+├── Microserviços por domínio
+│   ├── Auth Service
+│   ├── Catalog Service  
+│   ├── Order Service
+│   └── Payment Service
+└── Message Queue (RabbitMQ)
+
+📅 1-2 ANOS (escala alta):
+├── Container Orchestration (K8s)
+├── Event-driven architecture
+├── CQRS + Event Sourcing
+└── Multi-região

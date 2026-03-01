@@ -248,7 +248,7 @@ export class AppController {
     @Headers('x-tenant') tenantCode: string,
     @Body() body: { email: string; password: string },
   ) {
-    return this.login(tenantCode, body);
+    return this._performLogin(tenantCode, body);
   }
 
   @Post('auth-refresh')
@@ -422,33 +422,13 @@ export class AppController {
     }
   }
 
-  // Endpoint de login direto para compatibilidade com Vercel
+  // Endpoint de login direto para compatibilidade com Vercel  
   @Post('login')
   async login(
-    tenantCode: string,
-    body: { email: string; password: string },
-  );
-  async login(
-    @Headers('x-tenant') tenantCode?: string,
-    @Body() body?: { email: string; password: string },
+    @Headers('x-tenant') tenantCode: string,
+    @Body() body: { email: string; password: string },
   ) {
-    // Handle both direct calls and HTTP requests
-    if (typeof tenantCode === 'string' && body && !tenantCode.startsWith('Bearer')) {
-      // Direct call
-      return this._performLogin(tenantCode, body);
-    } else {
-      // HTTP request
-      const code = tenantCode;
-      const requestBody = body;
-      if (!code || !requestBody) {
-        return {
-          statusCode: 400,
-          message: 'Missing parameters',
-          error: 'Bad Request',
-        };
-      }
-      return this._performLogin(code, requestBody);
-    }
+    return this._performLogin(tenantCode, body);
   }
 
   private async _performLogin(
