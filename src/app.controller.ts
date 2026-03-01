@@ -241,6 +241,98 @@ export class AppController {
     }
   }
 
+  // Endpoint de login direto para compatibilidade com Vercel
+  @Post('login')
+  async login(
+    @Headers('x-tenant') tenantCode: string,
+    @Body() body: { email: string; password: string },
+  ) {
+    try {
+      if (!tenantCode) {
+        return {
+          statusCode: 400,
+          message: 'Missing x-tenant header',
+          error: 'Bad Request',
+        };
+      }
+
+      // Busca o tenant
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { code: tenantCode },
+      });
+
+      if (!tenant) {
+        return {
+          statusCode: 401,
+          message: 'Invalid tenant code',
+          error: 'Unauthorized',
+        };
+      }
+
+      // Busca o usuário
+      const user = await this.prisma.user.findUnique({
+        where: {
+          tenantId_email: {
+            tenantId: tenant.id,
+            email: body.email,
+          },
+        },
+      });
+
+      if (!user) {
+        return {
+          statusCode: 401,
+          message: 'Invalid credentials',
+          error: 'Unauthorized',
+        };
+      }
+
+      // Verifica senha
+      const validPassword = await bcrypt.compare(body.password, user.password);
+      if (!validPassword) {
+        return {
+          statusCode: 401,
+          message: 'Invalid credentials',
+          error: 'Unauthorized',
+        };
+      }
+
+      // Gera token JWT
+      const payload = {
+        sub: user.id,
+        tid: tenant.id,
+        role: user.role,
+      };
+
+      const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
+        expiresIn: '15m',
+      });
+
+      const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh-secret', {
+        expiresIn: '7d',
+      });
+
+      return {
+        accessToken,
+        refreshToken,
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        role: user.role,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      };
+    } catch (error: any) {
+      return {
+        statusCode: 500,
+        message: 'Internal server error',
+        error: error.message,
+      };
+    }
+  }
+
   // Endpoint de teste para login direto (para teste no mobile)
   @Post('test-login')
   async testLogin(
