@@ -247,3 +247,4 @@ Acessar:
 🧾 Licença
 Projeto interno © 2025 — Kantina.app.br
 Desenvolvido por Bruno Costa
+# Force rebuild
