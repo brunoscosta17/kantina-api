@@ -210,8 +210,8 @@ Se quiser rodar só a API sem Docker, use:
 
 Ou equivalente:
 
-- docker compose --profile local-db down -v
-- docker compose --profile local-db up --build
+docker compose --profile local-db down -v
+docker compose --profile local-db up --build
 
 2. Rodar a API e o banco normalmente (sem apagar banco, sem gerar nova seed):
    - pnpm dev:docker:up # Sobe API e banco, mantém dados existentes
@@ -228,3 +228,55 @@ operador@demo.com | OPERADOR | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
 resp1@demo.com | RESPONSAVEL | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
 resp2@demo.com | RESPONSAVEL | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
 aluno@demo.com | ALUNO | admin123 | 77abd4e8-76a2-4bd7-ab93-c112886c218a
+
+## Dados inseridos pela seed demo:
+Tenant (Escola):
+ID: 77abd4e8-76a2-4bd7-ab93-c112886c218a
+Nome: "Escola Kantina Demo"
+Código: Um número de 6 dígitos gerado aleatoriamente (será mostrado no log do seed)
+Usuários criados:
+
+Usuários criados:
+Email	              Senha	    Role	      Tenant ID
+admin@demo.com	    admin123	ADMIN	      77abd4e8-76a2-4bd7-ab93-c112886c218a
+gestor@demo.com	    admin123	GESTOR	    77abd4e8-76a2-4bd7-ab93-c112886c218a
+operador@demo.com	  admin123	OPERADOR	  77abd4e8-76a2-4bd7-ab93-c112886c218a
+resp1@demo.com	    admin123	RESPONSAVEL	77abd4e8-76a2-4bd7-ab93-c112886c218a
+resp2@demo.com	    admin123	RESPONSAVEL	77abd4e8-76a2-4bd7-ab93-c112886c218a
+aluno@demo.com	    admin123	ALUNO	      77abd4e8-76a2-4bd7-ab93-c112886c218a
+
+## Como consultar no banco:
+1. Conectar ao banco:
+
+docker compose exec db psql -U postgres -d kantina
+
+2. Ver o código do tenant:
+
+SELECT * FROM "Tenant";
+
+3. Ver todos os usuários:
+
+SELECT u.email, u.role, u."tenantId", t.code AS "schoolCode"
+FROM "User" u
+LEFT JOIN "Tenant" t ON u."tenantId" = t.id;
+
+4. Ver estudantes:
+
+SELECT * FROM "Student";
+
+5. Ver categorias e itens:
+
+SELECT c.name as categoria, ci.name as item, ci."priceCents", ci."isActive"
+FROM "Category" c
+LEFT JOIN "CatalogItem" ci ON c.id = ci."categoryId"
+ORDER BY c."sortOrder", ci.name;
+
+6. Ver carteiras dos alunos:
+
+SELECT s.name as aluno, w."balanceCents"
+FROM "Student" s
+LEFT JOIN "Wallet" w ON s.id = w."studentId";
+
+7. Para descobrir o código do tenant que foi gerado, você pode executar:
+
+cd /c/projects/Kantina/kantina-api && docker compose exec db psql -U postgres -d kantina -c "SELECT code, name FROM \"Tenant\";"

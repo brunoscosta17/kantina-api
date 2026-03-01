@@ -27,6 +27,7 @@ model Tenant {
   gerencianetClientSecret String?
   mercadopagoAccessToken String?
   mercadopagoPublicKey   String?
+  minChargeCents Int? // valor mínimo de recarga em centavos
 
   users      User[]
   students   Student[]

@@ -1,6 +1,9 @@
 allowBuilds:
-  bcrypt: true
-  prisma: true
+  '@nestjs/core': false
+  '@prisma/client': false
   '@prisma/engines': true
+  '@scarf/scarf': false
+  bcrypt: true
   esbuild: true
+  prisma: true
   unrs-resolver: true
