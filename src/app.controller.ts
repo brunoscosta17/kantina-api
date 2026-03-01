@@ -241,11 +241,219 @@ export class AppController {
     }
   }
 
+  // ===== FLAT CONTROLLER PATTERN FOR VERCEL =====
+  // Auth endpoints
+  @Post('auth-login')
+  async authLogin(
+    @Headers('x-tenant') tenantCode: string,
+    @Body() body: { email: string; password: string },
+  ) {
+    return this.login(tenantCode, body);
+  }
+
+  @Post('auth-refresh')
+  async authRefresh(
+    @Headers('x-tenant') tenantCode: string,
+    @Body() body: { refreshToken: string },
+  ) {
+    try {
+      if (!tenantCode) {
+        return {
+          statusCode: 400,
+          message: 'Missing x-tenant header',
+          error: 'Bad Request',
+        };
+      }
+
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { code: tenantCode },
+      });
+
+      if (!tenant) {
+        return {
+          statusCode: 401,
+          message: 'Invalid tenant code',
+          error: 'Unauthorized',
+        };
+      }
+
+      // Verify refresh token
+      try {
+        const decoded = jwt.verify(body.refreshToken, process.env.JWT_REFRESH_SECRET || 'refresh-secret') as any;
+
+        const user = await this.prisma.user.findUnique({
+          where: { id: decoded.sub },
+        });
+
+        if (!user || user.tenantId !== tenant.id) {
+          return {
+            statusCode: 401,
+            message: 'Invalid refresh token',
+            error: 'Unauthorized',
+          };
+        }
+
+        // Generate new tokens
+        const payload = {
+          sub: user.id,
+          tid: tenant.id,
+          role: user.role,
+        };
+
+        const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
+          expiresIn: '15m',
+        });
+
+        const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh-secret', {
+          expiresIn: '7d',
+        });
+
+        return {
+          accessToken,
+          refreshToken,
+          tokenType: 'Bearer',
+          expiresIn: 900,
+          role: user.role,
+        };
+      } catch (error) {
+        return {
+          statusCode: 401,
+          message: 'Invalid refresh token',
+          error: 'Unauthorized',
+        };
+      }
+    } catch (error: any) {
+      return {
+        statusCode: 500,
+        message: 'Internal server error',
+        error: error.message,
+      };
+    }
+  }
+
+  @Get('catalog-items')
+  async catalogItems(
+    @Headers('x-tenant') tenantCode: string,
+  ) {
+    try {
+      if (!tenantCode) {
+        return {
+          statusCode: 400,
+          message: 'Missing x-tenant header',
+          error: 'Bad Request',
+        };
+      }
+
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { code: tenantCode },
+      });
+
+      if (!tenant) {
+        return {
+          statusCode: 404,
+          message: 'Tenant not found',
+          error: 'Not Found',
+        };
+      }
+
+      const items = await this.prisma.catalogItem.findMany({
+        where: {
+          tenantId: tenant.id,
+          isActive: true,
+        },
+        include: {
+          category: true,
+        },
+        orderBy: [
+          { category: { sortOrder: 'asc' } },
+          { name: 'asc' },
+        ],
+      });
+
+      return items;
+    } catch (error: any) {
+      return {
+        statusCode: 500,
+        message: 'Internal server error',
+        error: error.message,
+      };
+    }
+  }
+
+  @Get('catalog-categories')
+  async catalogCategories(
+    @Headers('x-tenant') tenantCode: string,
+  ) {
+    try {
+      if (!tenantCode) {
+        return {
+          statusCode: 400,
+          message: 'Missing x-tenant header',
+          error: 'Bad Request',
+        };
+      }
+
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { code: tenantCode },
+      });
+
+      if (!tenant) {
+        return {
+          statusCode: 404,
+          message: 'Tenant not found',
+          error: 'Not Found',
+        };
+      }
+
+      const categories = await this.prisma.category.findMany({
+        where: {
+          tenantId: tenant.id,
+        },
+        orderBy: { sortOrder: 'asc' },
+      });
+
+      return categories;
+    } catch (error: any) {
+      return {
+        statusCode: 500,
+        message: 'Internal server error',
+        error: error.message,
+      };
+    }
+  }
+
   // Endpoint de login direto para compatibilidade com Vercel
   @Post('login')
   async login(
-    @Headers('x-tenant') tenantCode: string,
-    @Body() body: { email: string; password: string },
+    tenantCode: string,
+    body: { email: string; password: string },
+  );
+  async login(
+    @Headers('x-tenant') tenantCode?: string,
+    @Body() body?: { email: string; password: string },
+  ) {
+    // Handle both direct calls and HTTP requests
+    if (typeof tenantCode === 'string' && body && !tenantCode.startsWith('Bearer')) {
+      // Direct call
+      return this._performLogin(tenantCode, body);
+    } else {
+      // HTTP request
+      const code = tenantCode;
+      const requestBody = body;
+      if (!code || !requestBody) {
+        return {
+          statusCode: 400,
+          message: 'Missing parameters',
+          error: 'Bad Request',
+        };
+      }
+      return this._performLogin(code, requestBody);
+    }
+  }
+
+  private async _performLogin(
+    tenantCode: string,
+    body: { email: string; password: string },
   ) {
     try {
       if (!tenantCode) {
