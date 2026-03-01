@@ -2,10 +2,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
 import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
+import { AppModule } from 'src/app.module';
 
 const server = express();
 let isReady = false;
@@ -65,9 +67,6 @@ async function bootstrap(): Promise<void> {
 }
 
 // exporta o handler padrão para o Vercel (usa o servidor Express já criado)
-import { Request, Response } from 'express';
-import { AppModule } from 'src/app.module';
-
 export default async function handler(req: Request, res: Response) {
   if (!isReady) await bootstrap();
   return server(req, res);
