@@ -204,7 +204,7 @@ export class AppController {
         });
 
         if (!existingUser) {
-          const user = await this.prisma.user.create({
+          await this.prisma.user.create({
             data: {
               tenantId: tenant.id,
               email: userData.email,
