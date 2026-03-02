@@ -348,6 +348,59 @@ Após o webhook, o saldo atualizado pode ser visto em:
 - `GET /wallets/:studentId` (para admin/gestor/operador)
 - `GET /auth/me/wallets` (para responsável logado)
 
+### 4. Formato de resposta do histórico de recargas/movimentações
+
+Tanto o endpoint de carteira administrativa (`GET /wallets/:studentId`) quanto o endpoint do responsável (`GET /auth/me/wallets`) retornam um histórico já formatado, pronto para exibição no frontend.
+
+Exemplo de carteira (admin/gestor/operador):
+
+```json
+{
+  "id": "wallet-id",
+  "tenantId": "tenant-id",
+  "studentId": "student-id",
+  "balanceCents": 2500,
+  "transactions": [
+    {
+      "id": "tx-id-1",
+      "type": "PIX",
+      "label": "Recarga Pix",
+      "direction": "CREDIT",
+      "amountCents": 2000,
+      "createdAt": "2026-03-02T12:34:56.000Z",
+      "requestId": "gn_xxxxxxxx",
+      "meta": {
+        "status": "paid",
+        "provider": "gerencianet",
+        "note": "Recarga via Pix"
+      }
+    },
+    {
+      "id": "tx-id-2",
+      "type": "DEBIT",
+      "label": "Débito de consumo",
+      "direction": "DEBIT",
+      "amountCents": 500,
+      "createdAt": "2026-03-02T11:00:00.000Z",
+      "requestId": "debit-001",
+      "meta": {}
+    }
+  ]
+}
+```
+
+Regras de formatação usadas internamente:
+
+- `label`:
+  - `TOPUP` → `"Recarga manual"`
+  - `PIX` → `"Recarga Pix"`
+  - `DEBIT` → `"Débito de consumo"`
+  - `REFUND` → `"Estorno"`
+  - Outros tipos → o próprio valor de `type`.
+- `direction`:
+  - `TOPUP`, `PIX`, `REFUND` → `"CREDIT"` (entrada de saldo)
+  - Qualquer outro (ex.: `DEBIT`) → `"DEBIT"` (saída de saldo).
+
 ## Migração para Railway
 Como o Flat Controller ainda não resolve o problema do Vercel, vou te preparar a migração para Railway que é a solução definitiva.
 
@@ -733,6 +786,7 @@ Obrigatórias:
 Opcionais úteis:
 
 - `SWAGGER_BASE_URL=https://kantina-api-production.up.railway.app` (faz o Swagger apontar para a URL pública correta).
+ - `PIX_WEBHOOK_SECRET=...` (segredo compartilhado usado pelo endpoint `POST /wallets/pix-webhook` via header `x-pix-secret`).
 
 Após salvar as variáveis, faça um **Redeploy** do serviço para que elas entrem em vigor.
 
