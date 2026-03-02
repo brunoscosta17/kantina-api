@@ -244,6 +244,55 @@ Acessar:
 👉 https://kantina.app.br (em deploy real)
 👉 http://localhost:3000/docs (modo local)
 
+💸 Recarga de saldo via Pix (mock)
+
+Esta versão da API já suporta o fluxo completo de recarga de saldo via Pix em modo **mock** (sem integração real com PSP), com histórico formatado para os diferentes perfis.
+
+- Configuração por tenant:
+  - `PATCH /tenants/:tenantId/pix-config` → define `pixProvider`, chaves Pix e `minChargeCents`.
+  - Em produção (Railway), configure também `PIX_WEBHOOK_SECRET` no serviço `kantina-api`; o webhook exigirá o header `x-pix-secret` com esse valor.
+
+- Criação de cobrança Pix:
+  - `POST /wallets/:studentId/pix-charge`
+  - Autenticação: JWT + header `x-tenant` com o código da escola.
+  - Roles: `ADMIN`, `GESTOR`, `OPERADOR`.
+  - Gera um `chargeId`, `pixCopiaCola` e `qrCodeImageUrl` (mock) e registra uma `WalletTransaction` `type="PIX"` com `meta.status='pending'`.
+
+- Webhook de confirmação:
+  - `POST /wallets/pix-webhook`
+  - Se `PIX_WEBHOOK_SECRET` estiver definido, exige `x-pix-secret` correto.
+  - Marca a transação como `paid` e incrementa `Wallet.balanceCents`.
+
+- Histórico de recargas/movimentações:
+  - `GET /wallets/:studentId` (admin/gestor/operador) e `GET /auth/me/wallets` (responsável) retornam:
+
+```json
+{
+  "id": "wallet-id",
+  "tenantId": "tenant-id",
+  "studentId": "student-id",
+  "balanceCents": 2500,
+  "transactions": [
+    {
+      "id": "tx-id-1",
+      "type": "PIX",
+      "label": "Recarga Pix",
+      "direction": "CREDIT",
+      "amountCents": 2000,
+      "createdAt": "2026-03-02T12:34:56.000Z",
+      "requestId": "gn_xxxxxxxx",
+      "meta": {
+        "status": "paid",
+        "provider": "gerencianet",
+        "note": "Recarga via Pix"
+      }
+    }
+  ]
+}
+```
+
+Com isso, o frontend consegue exibir, para cada perfil, um extrato legível de recargas Pix, recargas manuais, débitos de consumo e estornos.
+
 🧾 Licença
 Projeto interno © 2025 — Kantina.app.br
 Desenvolvido por Bruno Costa
