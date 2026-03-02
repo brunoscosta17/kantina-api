@@ -1,0 +1,769 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Kantina API -  Railway
+meta:
+  id: wrk_51bc23901e674000bdf841235bf5f0f6
+  created: 1772393118197
+  modified: 1772393118197
+  description: ""
+collection:
+  - name: Catalog
+    meta:
+      id: fld_5111acfc043a4ba5972292bc89f92d33
+      created: 1772405561520
+      modified: 1772405561520
+      sortKey: -1770292216035
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/catalog-items"
+        name: List Catalog Items
+        meta:
+          id: req_313029db67a34d2e86e1022afa301dd8
+          created: 1772405561521
+          modified: 1772409812421
+          isPrivate: false
+          description: ""
+          sortKey: -1772404653763
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.1
+            description: ""
+            disabled: false
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/catalog-categories"
+        name: List Catalog Categories
+        meta:
+          id: req_7d944d8c87284d83840c1d8578468eae
+          created: 1772405817395
+          modified: 1772409829943
+          isPrivate: false
+          description: ""
+          sortKey: -1772404653713
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.1
+            description: ""
+            disabled: false
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Setup
+    meta:
+      id: fld_bc3ed32b4a1b4e15a8ceba77f93ffcca
+      created: 1772406404084
+      modified: 1772406888609
+      sortKey: -1770292216135
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/health"
+        name: Health Check
+        meta:
+          id: req_0acfab908fc242dfb97fadc68df9f4af
+          created: 1772406404097
+          modified: 1772409771014
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404097
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/create-demo-data"
+        name: Create Demo Data
+        meta:
+          id: req_4e7734e4d6f2452e81812b509032ab97
+          created: 1772406404099
+          modified: 1772409747870
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404099
+        method: POST
+        body:
+          mimeType: application/json
+          text: "{}"
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Auth (Flat)
+    meta:
+      id: fld_b734c17bb2b24db6aa1372bcc6fe4bdc
+      created: 1772406404087
+      modified: 1772406891998
+      sortKey: -1770292216085
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/login"
+        name: Login (flat)
+        meta:
+          id: req_3a6dc7e44aec4c57918b7cc3f3cbe651
+          created: 1772406404100
+          modified: 1772409794521
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404100
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "email": "admin@demo.com",
+              "password": "admin123"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/auth-refresh"
+        name: Auth Refresh (flat)
+        meta:
+          id: req_2c4c7025c4974511bc13e9661e0ee1de
+          created: 1772406404101
+          modified: 1772409787255
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404101
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "refreshToken": "{{ _.refresh_token }}"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/test-login"
+        name: Test Login (flat)
+        meta:
+          id: req_dd24fddae643487fa34785fb7c23ae97
+          created: 1772406404102
+          modified: 1772409778019
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404102
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "email": "admin@demo.com",
+              "password": "admin123"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Catalog (Flat)
+    meta:
+      id: fld_974f640e76b34e539df583bc768f3211
+      created: 1772406404089
+      modified: 1772406404089
+      sortKey: 2
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/catalog-items"
+        name: Catalog Items (flat)
+        meta:
+          id: req_0a668bb2479140b2b77f54f2011a17d6
+          created: 1772406404104
+          modified: 1772409863954
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404104
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/catalog-categories"
+        name: Catalog Categories (flat)
+        meta:
+          id: req_faa6b635fcfb4790b86b1c6fe37589ca
+          created: 1772406404105
+          modified: 1772409848336
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404105
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Auth (API)
+    meta:
+      id: fld_346d12bb3b024450b9a21c019abf1e3a
+      created: 1772406404090
+      modified: 1772406404090
+      sortKey: 3
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/auth/login"
+        name: Login (API)
+        meta:
+          id: req_e4ffe03925944641abce2f7696b213d5
+          created: 1772406404106
+          modified: 1772409994975
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404106
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "email": "admin@demo.com",
+              "password": "admin123"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/auth/refresh"
+        name: Auth Refresh (API)
+        meta:
+          id: req_56aa131461e44e1ca8886177c8c5ff64
+          created: 1772406404108
+          modified: 1772409985589
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404108
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "refreshToken": "{{ _.refresh_token }}"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/auth/logout"
+        name: Logout (API)
+        meta:
+          id: req_3b9e687c3651416eb2abc29640764c7d
+          created: 1772406404110
+          modified: 1772409907557
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404110
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "refreshToken": "{{ _.refresh_token }}"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/auth/me/alunos"
+        name: Me Alunos (RESPONSAVEL)
+        meta:
+          id: req_2b9ec77033d04ae6b057b77f337bf44b
+          created: 1772406404111
+          modified: 1772409896086
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404111
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/auth/me/wallets"
+        name: Me Wallets (RESPONSAVEL)
+        meta:
+          id: req_0f6168fd87144460a8cd1ee5fc856608
+          created: 1772406404112
+          modified: 1772409887992
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404112
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Catalog (API)
+    meta:
+      id: fld_68f09a268ad24c848d11b1032fe5c5ec
+      created: 1772406404092
+      modified: 1772406404092
+      sortKey: 4
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/catalog"
+        name: Catalog (API)
+        meta:
+          id: req_fa0947b490bf45e4ad1332f0b8c4b8fc
+          created: 1772406404113
+          modified: 1772410020830
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404113
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Orders
+    meta:
+      id: fld_f8e4799a45ff4d13a97446a45a547df5
+      created: 1772406404094
+      modified: 1772406404094
+      sortKey: 5
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/orders"
+        name: List Orders
+        meta:
+          id: req_045a03dc8ab94c9fa58ac9f6da77c198
+          created: 1772406404114
+          modified: 1772410066774
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404114
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders"
+        name: Create Order
+        meta:
+          id: req_af755d9a4e7845048c20225279378250
+          created: 1772406404114
+          modified: 1772410057481
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404114
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "studentId": "<STUDENT_ID>",
+              "items": [
+                {
+                  "itemId": "<CATALOG_ITEM_ID>",
+                  "qty": 1
+                }
+              ]
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/{{ order_id }}/fulfill"
+        name: Fulfill Order
+        meta:
+          id: req_0dbd407d7e014ce4bdd6de0a32b43d76
+          created: 1772406404115
+          modified: 1772410041030
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404115
+        method: POST
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/{{ order_id }}/cancel"
+        name: Cancel Order
+        meta:
+          id: req_8f34d552b44142768a9c411bb4dc83ea
+          created: 1772406404115
+          modified: 1772410030977
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404115
+        method: POST
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Wallets
+    meta:
+      id: fld_6588a313c2ba4cda9b0eaedf7da7e95e
+      created: 1772406404095
+      modified: 1772406404095
+      sortKey: 6
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/wallets/{{ student_id }}/topup"
+        name: Wallet Topup
+        meta:
+          id: req_0dc23fc98fb548329863e4c43c702b1c
+          created: 1772406404116
+          modified: 1772410100854
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404116
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "amountCents": 2000,
+              "requestId": "topup-001"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/wallets/{{ student_id }}/pix-charge"
+        name: Wallet Pix Charge
+        meta:
+          id: req_wallet_pix_charge
+          created: 1772411000000
+          modified: 1772411000000
+          isPrivate: false
+          description: "Cria uma cobrança Pix para a carteira do aluno"
+          sortKey: -1772406404116
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "amountCents": {{ _.pix_charge_amount_cents }},
+              "note": "Recarga via Pix"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/wallets/pix-webhook"
+        name: Wallet Pix Webhook (Simulado)
+        meta:
+          id: req_wallet_pix_webhook
+          created: 1772411010000
+          modified: 1772411010000
+          isPrivate: false
+          description: "Simula o webhook de confirmação do Pix"
+          sortKey: -1772406404119
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "chargeId": "<copie-o-chargeId da resposta do Wallet Pix Charge>"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-pix-secret
+            value: "{{ _.pix_webhook_secret }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/wallets/{{ student_id }}"
+        name: Get Wallet
+        meta:
+          id: req_ae4df8a9356b42d5bb42a3be46ed7651
+          created: 1772406404116
+          modified: 1772410094068
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404116
+        method: GET
+        headers:
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/wallets/{{ student_id }}/debit"
+        name: Wallet Debit
+        meta:
+          id: req_20e508c50242402ea8a6b4fc5e17c32a
+          created: 1772406404117
+          modified: 1772410085976
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404117
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "amountCents": 500,
+              "requestId": "debit-001"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/wallets/{{ student_id }}/refund"
+        name: Wallet Refund
+        meta:
+          id: req_babd9d3883974fe2b46133d74b65248d
+          created: 1772406404118
+          modified: 1772410079238
+          isPrivate: false
+          description: ""
+          sortKey: -1772406404118
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "amountCents": 500,
+              "requestId": "refund-001"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: x-tenant
+            value: "{{ _.tenant_code }}"
+          - name: Authorization
+            value: Bearer {{ _.access_token }}
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_29daec4a51680f883a74a85ba66c71d9994f75fe
+    created: 1772393118205
+    modified: 1772393118205
+environments:
+  name: Base Environment
+  meta:
+    id: env_29daec4a51680f883a74a85ba66c71d9994f75fe
+    created: 1772393118200
+    modified: 1772409731763
+    isPrivate: false
+  data:
+    tenant_code: "399099"
+    refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTM3MjlmNy0xYjJjLTQwYjctOWI1OC0zODZjODc3ZWI3YTQiLCJ0aWQiOiJkMGJkNzk4ZS02MGE5LTRmZTUtYWJmOS00Yjc2MDQzOTMyODUiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzI0MDQ4NjcsImV4cCI6MTc3MzAwOTY2N30.Al0VDr1vT9qrsxQ_VEOZmi6ToMNhSKhX-fYNOh5GLiM
+    access_token: ""
+    order_id: ""
+    student_id: ""
+    flat_access_token: ""
+    flat_refresh_token: ""
+    api_access_token: ""
+    api_refresh_token: ""
+    base_url: https://kantina-api-production.up.railway.app
+    pix_webhook_secret: "kantina-pix-webhook-2026-01"
+    pix_charge_amount_cents: 2000

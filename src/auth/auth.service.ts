@@ -141,34 +141,72 @@ export class AuthService {
       };
     }));
   }
-    async getWalletsOfResponsible(responsavelId: string) {
-      // Busca os alunos vinculados
-      const alunos = await this.prisma.studentOnResponsavel.findMany({
-        where: { responsavelId },
-        include: {
-          student: {
-            include: {
-              tenant: true,
-            },
+  async getWalletsOfResponsible(responsavelId: string) {
+    // Busca os alunos vinculados a esse responsável, com info de tenant
+    const alunos = await this.prisma.studentOnResponsavel.findMany({
+      where: { responsavelId },
+      include: {
+        student: {
+          include: {
+            tenant: true,
           },
         },
-      });
-      const studentIds = alunos.map(a => a.student.id);
-      // Busca as carteiras desses alunos
-      const wallets = await this.prisma.wallet.findMany({
-        where: { studentId: { in: studentIds } },
-        include: { student: true },
-      });
-      // Adiciona tenant (escola) ao objeto student de cada wallet
-      return wallets.map(w => {
-        const aluno = alunos.find(a => a.student.id === w.studentId)?.student;
+      },
+    });
+
+    const studentIds = alunos.map((a) => a.student.id);
+
+    if (studentIds.length === 0) {
+      return [];
+    }
+
+    // Busca as carteiras e já inclui o histórico recente de transações
+    const wallets = await this.prisma.wallet.findMany({
+      where: { studentId: { in: studentIds } },
+      include: {
+        student: true,
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
+      },
+    });
+
+    // Adiciona tenant (escola) ao objeto student de cada wallet e formata as transações
+    return wallets.map((w) => {
+      const aluno = alunos.find((a) => a.student.id === w.studentId)?.student;
+
+      const transactions = w.transactions.map((t) => {
+        const isCredit = t.type === 'TOPUP' || t.type === 'PIX' || t.type === 'REFUND';
+        let label = t.type;
+        if (t.type === 'TOPUP') label = 'Recarga manual';
+        else if (t.type === 'PIX') label = 'Recarga Pix';
+        else if (t.type === 'DEBIT') label = 'Débito de consumo';
+        else if (t.type === 'REFUND') label = 'Estorno';
+
         return {
-          ...w,
-          student: {
-            ...w.student,
-            tenant: aluno?.tenant ? { name: aluno.tenant.name, id: aluno.tenant.id } : undefined,
-          },
+          id: t.id,
+          type: t.type,
+          label,
+          direction: isCredit ? 'CREDIT' : 'DEBIT',
+          amountCents: t.amountCents,
+          createdAt: t.createdAt,
+          requestId: t.requestId,
+          meta: t.meta ?? undefined,
         };
       });
-    }
+
+      return {
+        id: w.id,
+        tenantId: w.tenantId,
+        studentId: w.studentId,
+        balanceCents: w.balanceCents,
+        student: {
+          ...w.student,
+          tenant: aluno?.tenant ? { name: aluno.tenant.name, id: aluno.tenant.id } : undefined,
+        },
+        transactions,
+      };
+    });
+  }
 }

@@ -16,7 +16,7 @@ export class WalletsService {
       include: { transactions: { orderBy: { createdAt: 'desc' }, take: 20 } },
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
-    return wallet;
+    return this.mapWallet(wallet);
   }
 
   async topup(
@@ -52,7 +52,9 @@ export class WalletsService {
           },
         });
 
-        return this.reloadWallet(tx, wallet.id);
+        const reloaded = await this.reloadWallet(tx, wallet.id);
+        if (!reloaded) throw new NotFoundException('Wallet not found');
+        return this.mapWallet(reloaded);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
@@ -100,7 +102,9 @@ export class WalletsService {
           },
         });
 
-        return this.reloadWallet(tx, wallet.id);
+        const reloaded = await this.reloadWallet(tx, wallet.id);
+        if (!reloaded) throw new NotFoundException('Wallet not found');
+        return this.mapWallet(reloaded);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
@@ -138,7 +142,9 @@ export class WalletsService {
           },
         });
 
-        return this.reloadWallet(tx, wallet.id);
+        const reloaded = await this.reloadWallet(tx, wallet.id);
+        if (!reloaded) throw new NotFoundException('Wallet not found');
+        return this.mapWallet(reloaded);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
@@ -161,5 +167,47 @@ export class WalletsService {
   private async findByRequestId(tx: Tx, tenantId: string, requestId?: string | null) {
     if (!requestId) return null;
     return tx.walletTransaction.findFirst({ where: { tenantId, requestId } });
+  }
+
+  // Transforma a carteira e transações em um formato amigável para a API
+  private mapWallet(wallet: {
+    id: string;
+    tenantId: string;
+    studentId: string;
+    balanceCents: number;
+    transactions: {
+      id: string;
+      type: string;
+      amountCents: number;
+      createdAt: Date;
+      meta: Prisma.JsonValue | null;
+      requestId: string | null;
+    }[];
+  }) {
+    return {
+      id: wallet.id,
+      tenantId: wallet.tenantId,
+      studentId: wallet.studentId,
+      balanceCents: wallet.balanceCents,
+      transactions: wallet.transactions.map((t) => {
+        const isCredit = t.type === 'TOPUP' || t.type === 'PIX' || t.type === 'REFUND';
+        let label = t.type;
+        if (t.type === 'TOPUP') label = 'Recarga manual';
+        else if (t.type === 'PIX') label = 'Recarga Pix';
+        else if (t.type === 'DEBIT') label = 'Débito de consumo';
+        else if (t.type === 'REFUND') label = 'Estorno';
+
+        return {
+          id: t.id,
+          type: t.type,
+          label,
+          direction: isCredit ? 'CREDIT' : 'DEBIT',
+          amountCents: t.amountCents,
+          createdAt: t.createdAt,
+          requestId: t.requestId,
+          meta: t.meta ?? undefined,
+        };
+      }),
+    };
   }
 }
