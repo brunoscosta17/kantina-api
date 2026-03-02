@@ -14,6 +14,12 @@ export class TenantsService {
     return { tenantId: tenant.id, name: tenant.name, code: tenant.code };
   }
 
+  async getById(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new NotFoundException('Tenant not found');
+    return tenant;
+  }
+
   async updatePixConfig(tenantId: string, body: any) {
     // Permite atualizar dados Pix e minChargeCents
     const {

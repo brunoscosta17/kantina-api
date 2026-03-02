@@ -11,6 +11,11 @@ export class TenantsController {
     return this.tenantsService.resolveByCode(q.code);
   }
 
+  @Get(':tenantId')
+  async getTenant(@Param('tenantId') tenantId: string) {
+    return this.tenantsService.getById(tenantId);
+  }
+
   @Patch(':tenantId/pix-config')
   async updatePixConfig(@Param('tenantId') tenantId: string, @Body() body: any) {
     return this.tenantsService.updatePixConfig(tenantId, body);

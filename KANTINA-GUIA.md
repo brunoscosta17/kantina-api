@@ -271,6 +271,10 @@ LEFT JOIN "Wallet" w ON s.id = w."studentId";
 
 cd /c/projects/Kantina/kantina-api && docker compose exec db psql -U postgres -d kantina -c "SELECT code, name FROM \"Tenant\";"
 
+ou
+
+docker compose exec db psql -U postgres -d kantina -c "SELECT code, name FROM \"Tenant\";"
+
 ## Fluxo de recarga via Pix (mock)
 
 Esta primeira versão da recarga via Pix é **mockada** (sem integração real com PSP), mas já define todas as rotas e contratos que o frontend e a futura integração real vão usar.

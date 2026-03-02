@@ -4,8 +4,9 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { PrismaService } from '../prisma.service';
+import { PixService } from '../wallet/pix.service';
 import { MoneyDto } from './dto/money.dto';
-import { TopupDto } from './dto/topup.dto';
 import { WalletsService } from './wallets.service';
 
 @ApiTags('Wallets')
@@ -15,6 +16,8 @@ import { WalletsService } from './wallets.service';
 export class WalletsController {
   constructor(
     private readonly svc: WalletsService,
+    private readonly prisma: PrismaService,
+    private readonly pix: PixService,
   ) {}
 
   @Get(':studentId')
@@ -39,5 +42,43 @@ export class WalletsController {
   @Roles('ADMIN', 'GESTOR')
   refund(@Req() req: Request, @Param('studentId') studentId: string, @Body() dto: MoneyDto) {
     return this.svc.refund(req.tenantId!, studentId, dto.amountCents, dto.requestId);
+  }
+
+  // Endpoint para criar cobrança Pix (iniciado pelo responsável)
+  @Post(':studentId/pix-charge')
+  @Roles('RESPONSAVEL')
+  async createPixCharge(
+    @Param('studentId') studentId: string,
+    @Body() body: { valueCents: number },
+  ) {
+    const { valueCents } = body;
+    if (!valueCents || valueCents <= 0) {
+      throw new BadRequestException('valueCents must be positive');
+    }
+
+    const wallet = await this.prisma.wallet.findFirst({ where: { studentId } });
+    if (!wallet) {
+      throw new BadRequestException('Carteira do aluno não encontrada');
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: wallet.tenantId } });
+    if (!tenant) {
+      throw new BadRequestException('Cantina não encontrada');
+    }
+
+    const charge = await this.pix.createPixCharge({ studentId, valueCents, tenant });
+
+    await this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        tenantId: wallet.tenantId,
+        type: 'PIX',
+        amountCents: valueCents,
+        meta: { status: 'pending' },
+        requestId: charge.chargeId,
+      },
+    });
+
+    return charge;
   }
 }
