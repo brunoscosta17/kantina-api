@@ -34,7 +34,11 @@
     "db:seed:demo": "tsx src/prisma/seed.demo.ts",
     "seed:local": "tsx src/prisma/seed.ts",
     "vercel-build": "prisma generate --schema=src/prisma/schema.prisma && nest build",
-    "migrate:env": "pnpm dlx dotenv-cli -e .env -- prisma migrate dev --name add-responsavel-aluno-relation --schema=src/prisma/schema.prisma"
+    "migrate:env": "pnpm dlx dotenv-cli -e .env -- prisma migrate dev --name add-responsavel-aluno-relation --schema=src/prisma/schema.prisma",
+
+    "db:migrate:railway": "dotenv -e .env.railway.local -- prisma migrate deploy --schema=src/prisma/schema.prisma",
+    "db:seed:railway:demo": "dotenv -e .env.railway.local -- tsx src/prisma/seed.demo.ts",
+    "deploy:prod": "pnpm lint && pnpm test && git push origin main"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

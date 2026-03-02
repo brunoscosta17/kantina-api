@@ -1,0 +1,599 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-03-01T00:00:00.000Z",
+  "__export_source": "github-copilot-gpt-5.1",
+  "resources": [
+    {
+      "_id": "wrk_kantina_api_railway",
+      "_type": "workspace",
+      "name": "Kantina API - Railway",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "https://kantina-api-production.up.railway.app",
+        "tenant_code": "399099",
+        "access_token": "",
+        "refresh_token": ""
+      }
+    },
+    {
+      "_id": "fld_setup",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Setup",
+      "environment": {},
+      "metaSortKey": 0
+    },
+    {
+      "_id": "fld_auth_flat",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Auth (Flat)",
+      "environment": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "fld_catalog_flat",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Catalog (Flat)",
+      "environment": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "fld_auth_api",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Auth (API)",
+      "environment": {},
+      "metaSortKey": 3
+    },
+    {
+      "_id": "fld_catalog_api",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Catalog (API)",
+      "environment": {},
+      "metaSortKey": 4
+    },
+    {
+      "_id": "fld_orders",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Orders",
+      "environment": {},
+      "metaSortKey": 5
+    },
+    {
+      "_id": "fld_wallets",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Wallets",
+      "environment": {},
+      "metaSortKey": 6
+    },
+
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "fld_setup",
+      "name": "Health Check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_create_demo_data",
+      "_type": "request",
+      "parentId": "fld_setup",
+      "name": "Create Demo Data",
+      "method": "POST",
+      "url": "{{ _.base_url }}/create-demo-data",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_create_demo"
+        }
+      ],
+      "authentication": {}
+    },
+
+    {
+      "_id": "req_flat_login",
+      "_type": "request",
+      "parentId": "fld_auth_flat",
+      "name": "Login (flat)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@demo.com\",\n  \"password\": \"admin123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_flat_login"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_flat_login"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_flat_auth_refresh",
+      "_type": "request",
+      "parentId": "fld_auth_flat",
+      "name": "Auth Refresh (flat)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth-refresh",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"refreshToken\": \"{{ _.refresh_token }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_flat_refresh"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_flat_refresh"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_flat_test_login",
+      "_type": "request",
+      "parentId": "fld_auth_flat",
+      "name": "Test Login (flat)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/test-login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@demo.com\",\n  \"password\": \"admin123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_test_login"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_test_login"
+        }
+      ],
+      "authentication": {}
+    },
+
+    {
+      "_id": "req_flat_catalog_items",
+      "_type": "request",
+      "parentId": "fld_catalog_flat",
+      "name": "Catalog Items (flat)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog-items",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_catalog_items"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_flat_catalog_categories",
+      "_type": "request",
+      "parentId": "fld_catalog_flat",
+      "name": "Catalog Categories (flat)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog-categories",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_catalog_categories"
+        }
+      ],
+      "authentication": {}
+    },
+
+    {
+      "_id": "req_auth_login",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Login (API)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@demo.com\",\n  \"password\": \"admin123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_auth_login"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_auth_login"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_auth_refresh",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Auth Refresh (API)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/refresh",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"refreshToken\": \"{{ _.refresh_token }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_auth_refresh"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_auth_refresh"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_auth_logout",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Logout (API)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/logout",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"refreshToken\": \"{{ _.refresh_token }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_auth_logout"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_auth_logout"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_auth_me_alunos",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Me Alunos (RESPONSAVEL)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me/alunos",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_me_alunos"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_me_alunos"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_auth_me_wallets",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Me Wallets (RESPONSAVEL)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me/wallets",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_me_wallets"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_me_wallets"
+        }
+      ],
+      "authentication": {}
+    },
+
+    {
+      "_id": "req_catalog_api_list",
+      "_type": "request",
+      "parentId": "fld_catalog_api",
+      "name": "Catalog (API)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_catalog_api"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_catalog_api"
+        }
+      ],
+      "authentication": {}
+    },
+
+    {
+      "_id": "req_orders_list",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "List Orders",
+      "method": "GET",
+      "url": "{{ _.base_url }}/orders",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_orders_list"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_orders_list"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_orders_create",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "Create Order",
+      "method": "POST",
+      "url": "{{ _.base_url }}/orders",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"studentId\": \"<STUDENT_ID>\",\n  \"items\": [\n    {\n      \"itemId\": \"<CATALOG_ITEM_ID>\",\n      \"qty\": 1\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_orders_create"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_orders_create"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_orders_create"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_orders_fulfill",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "Fulfill Order",
+      "method": "POST",
+      "url": "{{ _.base_url }}/orders/{{ order_id }}/fulfill",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_orders_fulfill"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_orders_fulfill"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_orders_cancel",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "Cancel Order",
+      "method": "POST",
+      "url": "{{ _.base_url }}/orders/{{ order_id }}/cancel",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_orders_cancel"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_orders_cancel"
+        }
+      ],
+      "authentication": {}
+    },
+
+    {
+      "_id": "req_wallet_get",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Get Wallet",
+      "method": "GET",
+      "url": "{{ _.base_url }}/wallets/{{ student_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_wallet_get"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_wallet_get"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_wallet_topup",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Wallet Topup",
+      "method": "POST",
+      "url": "{{ _.base_url }}/wallets/{{ student_id }}/topup",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"amountCents\": 2000,\n  \"requestId\": \"topup-001\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_wallet_topup"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_wallet_topup"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_wallet_topup"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_wallet_debit",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Wallet Debit",
+      "method": "POST",
+      "url": "{{ _.base_url }}/wallets/{{ student_id }}/debit",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"amountCents\": 500,\n  \"requestId\": \"debit-001\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_wallet_debit"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_wallet_debit"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_wallet_debit"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_wallet_refund",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Wallet Refund",
+      "method": "POST",
+      "url": "{{ _.base_url }}/wallets/{{ student_id }}/refund",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"amountCents\": 500,\n  \"requestId\": \"refund-001\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_wallet_refund"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_wallet_refund"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_wallet_refund"
+        }
+      ],
+      "authentication": {}
+    }
+  ]
+}

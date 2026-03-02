@@ -589,3 +589,168 @@ Alternativas Descartadas:
 ❌ Heroku: Caro e legado
 ❌ DigitalOcean App: Menos features que Railway
 Railway é a escolha estratégica perfeita: resolve hoje, escala amanhã, migra facilmente depois.
+
+## Ambiente de Produção - Railway (Passo a passo)
+
+Esta seção documenta exatamente como o Kantina foi configurado para rodar na Railway e como você deve operar o ambiente de produção (deploy, migrations, seed e testes).
+
+### 1. Criar projeto e serviços na Railway
+
+1. Crie uma conta em https://railway.app e faça login.
+2. Clique em **New Project → Deploy from GitHub** e selecione o repositório que contém a pasta `kantina-api`.
+3. Dentro do projeto, crie um serviço **Postgres** (plugin nativo da Railway).
+4. Certifique‑se de que:
+  - Existe um serviço chamado algo como **kantina-api** apontando para a pasta `kantina-api` do repositório.
+  - O serviço **kantina-api** está ligado ao serviço **Postgres** (Railway faz isso automaticamente quando você usa a variável `Postgres.DATABASE_URL`).
+
+### 2. Configuração de build e start
+
+O arquivo [kantina-api/railway.json](kantina-api/railway.json) já está preparado para a Railway:
+
+- Builder: Nixpacks (automático).
+- Comandos:
+  - `buildCommand`: `pnpm install && pnpm run build`
+  - `startCommand`: `node dist/main`
+
+Você não precisa configurar isso manualmente no painel; basta manter o `railway.json` versionado que a Railway lê essas instruções no deploy.
+
+### 3. Variáveis de ambiente na Railway
+
+No serviço **kantina-api**, configure as variáveis em **Variables**:
+
+Obrigatórias:
+
+- `NODE_ENV=production`
+- `DATABASE_URL=${{Postgres.DATABASE_URL}}`  (selecione a variável gerada automaticamente pelo plugin Postgres)
+- `JWT_SECRET=...` (segredo para tokens de acesso)
+- `JWT_REFRESH_SECRET=...` (segredo para tokens de refresh)
+- `FRONTEND_ORIGINS=http://localhost:8081,http://localhost:5173,https://kantina.app.br` (ajuste conforme seus frontends reais)
+
+Opcionais úteis:
+
+- `SWAGGER_BASE_URL=https://kantina-api-production.up.railway.app` (faz o Swagger apontar para a URL pública correta).
+
+Após salvar as variáveis, faça um **Redeploy** do serviço para que elas entrem em vigor.
+
+### 4. Saúde, documentação e testes em produção
+
+- Health check: `GET https://kantina-api-production.up.railway.app/health`
+- Documentação Swagger: `GET https://kantina-api-production.up.railway.app/docs`
+- Endpoint utilitário para popular dados demo: `POST https://kantina-api-production.up.railway.app/create-demo-data`
+
+Esse último cria um tenant de demonstração com usuários e itens básicos para testes. A resposta traz o `tenant.code` e credenciais padrão (por exemplo `admin@demo.com` / `admin123`).
+
+### 5. Scripts locais para operar o ambiente Railway
+
+Para facilitar a operação, foram criados scripts no [kantina-api/package.json](kantina-api/package.json).
+
+#### 5.1. Arquivo `.env.railway.local`
+
+Crie um arquivo `.env.railway.local` na pasta `kantina-api` contendo, no mínimo:
+
+```env
+NODE_ENV=production
+DATABASE_URL=postgresql://postgres:SEU_TOKEN@ballast.proxy.rlwy.net:PORTA/railway
+```
+
+Use a **Connection URL (Public Network)** exibida no plugin Postgres da Railway (não use o host interno `postgres.railway.internal`).
+
+Esse arquivo é usado **apenas** pelos comandos Prisma rodando da sua máquina, nunca é enviado para o servidor.
+
+#### 5.2. Rodar migrations em produção
+
+Script:
+
+- `pnpm db:migrate:railway`
+
+O que faz:
+
+- Usa `dotenv -e .env.railway.local` para carregar o `DATABASE_URL` público da Railway.
+- Executa `prisma migrate deploy --schema=src/prisma/schema.prisma` contra o Postgres da Railway.
+
+Quando usar:
+
+- Sempre que você criar/alterar modelos no `schema.prisma` e gerar novas migrations localmente, rode esse comando para aplicar as migrations também em produção.
+
+#### 5.3. Rodar seed demo em produção (opcional)
+
+Script:
+
+- `pnpm db:seed:railway:demo`
+
+O que faz:
+
+- Usa `.env.railway.local` para conectar no Postgres da Railway.
+- Executa `tsx src/prisma/seed.demo.ts`, populando o banco com dados de demonstração (tenant, usuários, catálogo etc.).
+
+Use com cuidado em produção real; é ideal para ambientes de staging ou para preparar um ambiente de demo.
+
+#### 5.4. Deploy simplificado da API
+
+Script:
+
+- `pnpm deploy:prod`
+
+O que faz:
+
+1. `pnpm lint` – roda o ESLint no projeto.
+2. `pnpm test` – executa a suíte de testes.
+3. `git push origin main` – envia a branch `main` para o repositório remoto.
+
+Pré‑requisito:
+
+- O projeto Railway deve estar configurado para fazer deploy automático a partir da branch `main` desse repositório.
+
+Fluxo recomendado ao adicionar um novo recurso na API:
+
+1. Implementar a feature e, se necessário, criar migrations locais (
+  - `pnpm db:migrate:dev` para ambiente local).
+2. Rodar testes localmente se desejar (`pnpm test`).
+3. Comitar as mudanças normalmente (`git add`, `git commit`).
+4. Rodar `pnpm deploy:prod`.
+5. Após o deploy concluir na Railway, se houve mudanças de schema, executar `pnpm db:migrate:railway` para atualizar o banco de produção.
+
+### 6. Coleção Insomnia para testar a API na Railway
+
+O arquivo [kantina-api/insomnia-kantina-api-railway.json](kantina-api/insomnia-kantina-api-railway.json) contém uma coleção pronta para o Insomnia.
+
+Como usar:
+
+1. No Insomnia: `Application → Import/Export → Import Data → From File`.
+2. Selecione `insomnia-kantina-api-railway.json`.
+3. O workspace **"Kantina API - Railway"** será criado com:
+  - Pastas: Setup, Auth (Flat), Catalog (Flat), Auth (API), Catalog (API), Orders, Wallets.
+  - Variáveis de ambiente (`base_url`, `tenant_code`, tokens) já configuradas para a Railway.
+4. Fluxo típico de teste em produção:
+  - `POST Create Demo Data` → obtém `tenant_code`.
+  - `POST Login (API)` → obtém `accessToken`/`refreshToken`.
+  - Testar endpoints de catálogo, pedidos e carteiras usando o header `Authorization: Bearer <accessToken>`.
+
+## Fluxo para atualizar banco em produção (Railway)
+
+Pré‑requisito: arquivo .env.railway.local com DATABASE_URL apontando para o Postgres público da Railway.
+
+No terminal, na pasta kantina-api:
+
+pnpm db:migrate:railway → aplica todas as migrations pendentes no banco da Railway.
+
+Opcional: pnpm db:seed:railway:demo → roda o seed demo no banco da Railway.
+
+Isso substitui aquele comando manual longo que você rodou antes.
+
+## Fluxo para subir código para produção
+
+Pressupondo que a Railway está conectada ao seu repositório GitHub e que a branch main dispara o deploy:
+
+Faz suas alterações de código.
+
+git add . && git commit -m "feat: nova feature X" (commit manual).
+
+Na pasta kantina-api:
+
+pnpm deploy:prod
+
+Ele vai:
+Rodar lint e test localmente.
+Se estiver tudo ok, dar git push origin main.
+A Railway pega o novo commit na main e faz o deploy automaticamente.
