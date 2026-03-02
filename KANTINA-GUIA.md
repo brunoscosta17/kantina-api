@@ -753,6 +753,35 @@ Como usar:
   - `POST Login (API)` → obtém `accessToken`/`refreshToken`.
   - Testar endpoints de catálogo, pedidos e carteiras usando o header `Authorization: Bearer <accessToken>`.
 
+  ## Como descobrir rapidamente tenant/code e logins de teste
+
+  Você tem três formas principais de obter as informações de acesso para testes (tenant, códigos e usuários demo):
+
+  1. **Seed demo local (Docker)**
+    - Comando de fluxo: `pnpm flow:local:reset-demo`.
+    - Isso executa o seed demo (`src/prisma/seed.demo.ts`) dentro do container.
+    - Veja os logs do serviço `seed` (por exemplo com `docker compose logs seed`) e procure por um bloco como:
+      - `TENANT_ID=...`
+      - `TENANT_CODE=...`
+      - lista de e-mails por role (ADMIN, GESTOR, OPERADOR, RESPONSÁVEIS, ALUNO), todos com senha `admin123`.
+
+  2. **Seed demo apontando para a Railway**
+    - Comando: `pnpm db:seed:railway:demo`.
+    - Usa `.env.railway.local` para conectar no Postgres da Railway e roda o mesmo `seed.demo.ts`.
+    - O resumo completo (tenant id, código e logins) é impresso direto no seu terminal local.
+
+  3. **Endpoint utilitário em produção**
+    - Endpoint: `POST https://kantina-api-production.up.railway.app/create-demo-data`.
+    - A resposta JSON já traz:
+      - `tenant.code` (código da escola para usar no header `x-tenant`).
+      - `login.email` / `login.password` (usuário ADMIN).
+      - `testUsers` com e-mail, senha e role de cada tipo de usuário.
+
+  Recomendação prática:
+
+  - Para desenvolvimento local: use sempre o fluxo `pnpm flow:local:reset-demo` e leia os logs do seed.
+  - Para ambientes ligados à Railway (staging/prod): use `pnpm db:seed:railway:demo` ou o endpoint `/create-demo-data` conforme o cenário.
+
 ## Fluxo para atualizar banco em produção (Railway)
 
 Pré‑requisito: arquivo .env.railway.local com DATABASE_URL apontando para o Postgres público da Railway.

@@ -315,10 +315,19 @@ async function main() {
     },
   });
 
-  console.log('Seed DEMO OK');
+  console.log('================= DEMO SEED =================');
   console.log('TENANT_ID=', tenant.id);
-  console.log('Login como: admin@demo.com / admin123');
-  console.log('Login como: aluno@demo.com / admin123');
+  console.log('TENANT_CODE=', tenant.code);
+  console.log('TENANT_NAME=', tenant.name);
+  console.log('---------------------------------------------');
+  console.log('Credenciais de acesso (todas usam senha: admin123)');
+  console.log('- ADMIN      : admin@demo.com');
+  console.log('- GESTOR     : gestor@demo.com');
+  console.log('- OPERADOR   : operador@demo.com');
+  console.log('- RESPONSÁVEL 1: resp1@demo.com');
+  console.log('- RESPONSÁVEL 2: resp2@demo.com');
+  console.log('- ALUNO      : aluno@demo.com');
+  console.log('=============================================');
 }
 
 main()
