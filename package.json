@@ -25,6 +25,7 @@
     "prisma:seed:demo": "tsx src/prisma/seed.demo.ts",
     "dev:docker:up": "docker compose --profile local-db up -d --build",
     "dev:docker:down": "docker compose down -v",
+    "dev:docker:reset-demo": "pnpm dev:docker:down && pnpm dev:docker:up",
     "db:migrate": "docker compose exec api pnpm prisma migrate dev --name init",
     "db:migrate:dev": "prisma migrate dev --schema=src/prisma/schema.prisma",
     "db:migrate:prod": "prisma migrate deploy --schema=src/prisma/schema.prisma",
@@ -38,7 +39,12 @@
 
     "db:migrate:railway": "dotenv -e .env.railway.local -- prisma migrate deploy --schema=src/prisma/schema.prisma",
     "db:seed:railway:demo": "dotenv -e .env.railway.local -- tsx src/prisma/seed.demo.ts",
-    "deploy:prod": "pnpm lint && pnpm test && git push origin main"
+    "deploy:prod": "pnpm lint && pnpm test && git push origin main",
+
+    "flow:local:reuse-db": "pnpm dev:docker:up",
+    "flow:local:reset-demo": "pnpm dev:docker:reset-demo",
+    "flow:local:schema": "pnpm db:migrate:dev && pnpm dev:docker:reset-demo",
+    "flow:prod:full": "pnpm deploy:prod && pnpm db:migrate:railway"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

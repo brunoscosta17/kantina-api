@@ -205,20 +205,10 @@ Se quiser rodar só a API sem Docker, use:
 ## Aqui está o resumo dos comandos para o seu projeto kantina-api:
 
 1. Subir Docker do zero (apaga banco e gera nova seed demo):
-   pnpm dev:docker:down
-   pnpm dev:docker:up
-
-Ou equivalente:
-
-docker compose --profile local-db down -v
-docker compose --profile local-db up --build
+  pnpm flow:local:reset-demo
 
 2. Rodar a API e o banco normalmente (sem apagar banco, sem gerar nova seed):
-   - pnpm dev:docker:up # Sobe API e banco, mantém dados existentes
-
-Ou equivalente:
-
-- docker compose --profile local-db up --build
+  pnpm flow:local:reuse-db
 
 ## Exemplos de usuários e roles
 
@@ -589,6 +579,43 @@ Alternativas Descartadas:
 ❌ Heroku: Caro e legado
 ❌ DigitalOcean App: Menos features que Railway
 Railway é a escolha estratégica perfeita: resolve hoje, escala amanhã, migra facilmente depois.
+
+## Fluxos de trabalho (scripts principais)
+
+Para facilitar o dia a dia, use estes fluxos prontos (sempre na pasta `kantina-api`).
+
+### 1. Testar API localmente com banco e seed atuais
+
+- Script: `pnpm flow:local:reuse-db`
+- O que faz:
+  - Sobe Docker com o profile `local-db` usando os dados existentes.
+  - Mantém o banco como está; ótimo quando você não quer perder dados de teste.
+
+### 2. Testar localmente com banco zerado + seed demo nova
+
+- Script: `pnpm flow:local:reset-demo`
+- O que faz:
+  - `pnpm dev:docker:down` → derruba containers e volumes (apaga o banco).
+  - `pnpm dev:docker:up` → sobe Postgres + API, aplica migrations e roda a seed demo.
+- Use quando quiser um ambiente completamente limpo, com os dados padrão da seed demo.
+
+### 3. Testar alterações de schema Prisma (local)
+
+- Script: `pnpm flow:local:schema`
+- O que faz:
+  - `pnpm db:migrate:dev` → gera/aplica migrations no banco de desenvolvimento local (usando `DATABASE_URL` da máquina).
+  - `pnpm dev:docker:reset-demo` → recria o ambiente Docker com o novo schema e seed demo nova.
+- Fluxo recomendado quando você altera `src/prisma/schema.prisma`.
+
+### 4. Testar e subir mudanças para produção (Railway)
+
+- Script: `pnpm flow:prod:full`
+- O que faz:
+  1. `pnpm deploy:prod` → roda lint, testes e dá `git push origin main`.
+  2. `pnpm db:migrate:railway` → aplica migrations pendentes no Postgres da Railway usando `.env.railway.local`.
+- Pré‑requisitos:
+  - Railway configurada para fazer deploy automático a partir da branch `main`.
+  - Arquivo `.env.railway.local` com `DATABASE_URL` apontando para o Postgres público da Railway.
 
 ## Ambiente de Produção - Railway (Passo a passo)
 
