@@ -19,8 +19,6 @@ import { StudentsModule } from './students/students.module';
 import { TenantMiddleware } from './tenant.middleware';
 import { TenantsModule } from './tenants/tenants.module';
 import { TestsModule } from './tests/tests.module';
-import { PixService } from './wallet/pix.service';
-import { WalletController } from './wallet/wallet.controller';
 import { WalletsModule } from './wallets/wallets.module';
 
 @Module({
@@ -43,8 +41,14 @@ import { WalletsModule } from './wallets/wallets.module';
     HealthModule,
     ...(process.env.ENABLE_TEST_ENDPOINTS === 'true' ? [TestsModule] : []),
   ],
-    controllers: [AppController, AuthController, HealthController, WalletController],
-    providers: [AppService, AuthService, PrismaService, CategoriesService, { provide: APP_GUARD, useClass: ThrottlerGuard }, PixService],
+  controllers: [AppController, AuthController, HealthController],
+  providers: [
+    AppService,
+    AuthService,
+    PrismaService,
+    CategoriesService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

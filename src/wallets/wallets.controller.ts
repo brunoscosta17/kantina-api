@@ -1,22 +1,21 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { MoneyDto } from './dto/money.dto';
+import { TopupDto } from './dto/topup.dto';
 import { WalletsService } from './wallets.service';
-
-class MoneyDto {
-  amountCents!: number;
-  requestId?: string;
-}
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('wallets')
 export class WalletsController {
-  constructor(private readonly svc: WalletsService) {}
+  constructor(
+    private readonly svc: WalletsService,
+  ) {}
 
   @Get(':studentId')
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')

@@ -594,6 +594,58 @@
         }
       ],
       "authentication": {}
+    },
+    {
+      "_id": "req_wallet_pix_charge",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Wallet Pix Charge",
+      "method": "POST",
+      "url": "{{ _.base_url }}/wallets/{{ student_id }}/pix-charge",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"amountCents\": 2000,\n  \"note\": \"Recarga via Pix\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_wallet_pix_charge"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_wallet_pix_charge"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_wallet_pix_charge"
+        }
+      ],
+      "authentication": {}
+    },
+    {
+      "_id": "req_wallet_pix_webhook",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Wallet Pix Webhook (Simulado)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/wallets/pix-webhook",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"chargeId\": \"<copiar-chargeId-da-resposta-do-pix-charge>\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_wallet_pix_webhook"
+        }
+      ],
+      "authentication": {}
     }
   ]
 }

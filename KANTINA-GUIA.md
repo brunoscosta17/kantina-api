@@ -271,6 +271,83 @@ LEFT JOIN "Wallet" w ON s.id = w."studentId";
 
 cd /c/projects/Kantina/kantina-api && docker compose exec db psql -U postgres -d kantina -c "SELECT code, name FROM \"Tenant\";"
 
+## Fluxo de recarga via Pix (mock)
+
+Esta primeira versão da recarga via Pix é **mockada** (sem integração real com PSP), mas já define todas as rotas e contratos que o frontend e a futura integração real vão usar.
+
+### 1. Configurar Pix para o tenant
+
+- Endpoint: `PATCH /tenants/:tenantId/pix-config`
+- Serviço: TenantsService (método `updatePixConfig`)
+- Campos suportados:
+  - `pixProvider` (ex.: `"gerencianet"` ou `"mercadopago"`)
+  - `pixKey`
+  - `gerencianetClientId`, `gerencianetClientSecret`
+  - `mercadopagoAccessToken`, `mercadopagoPublicKey`
+  - `minChargeCents` (valor mínimo de recarga em centavos)
+
+> Em produção (Railway), configure também `PIX_WEBHOOK_SECRET` no serviço da API. O webhook irá esperar o header `x-pix-secret` com esse valor.
+
+### 2. Criar cobrança Pix para a carteira do aluno
+
+- Endpoint: `POST /wallets/:studentId/pix-charge`
+- Autenticação: JWT (`Authorization: Bearer <accessToken>`) + `x-tenant` com o código da escola
+- Roles permitidas: `ADMIN`, `GESTOR`, `OPERADOR`
+- Body (TopupDto):
+
+```json
+{
+  "amountCents": 2000,
+  "note": "Recarga via Pix"
+}
+```
+
+Fluxo interno:
+- Resolve `tenantId` via `TenantMiddleware` (`x-tenant`).
+- Busca a carteira (`Wallet`) por `(tenantId, studentId)`.
+- Busca o `Tenant` e valida:
+  - se `pixProvider` está configurado;
+  - se `amountCents >= minChargeCents` (quando definido).
+- Chama `PixService.createPixCharge(...)` (mock), que devolve:
+  - `chargeId`
+  - `pixCopiaCola`
+  - `qrCodeImageUrl`
+- Grava uma `WalletTransaction` com:
+  - `type = 'PIX'`
+  - `amountCents = amountCents`
+  - `meta.status = 'pending'`
+  - `meta.provider = pixProvider`
+  - `requestId = chargeId`
+- **Não** altera o saldo ainda (aguarda confirmação do Pix).
+
+### 3. Confirmar pagamento Pix (webhook)
+
+- Endpoint: `POST /wallets/pix-webhook`
+- Controller dedicado: `PixWebhookController` (sem `JwtAuthGuard`)
+- Segurança:
+  - Se `PIX_WEBHOOK_SECRET` **não** estiver definido: o webhook aceita qualquer chamada (útil em dev/local).
+  - Se `PIX_WEBHOOK_SECRET` estiver definido: a requisição deve enviar o header `x-pix-secret` exatamente com esse valor, caso contrário responde `401 Invalid Pix webhook secret`.
+- Body esperado (mock):
+
+```json
+{
+  "chargeId": "<valor retornado em pix-charge>"
+}
+```
+
+Fluxo interno:
+- Chama `PixService.confirmPixPayment(chargeId)` (mock: sempre marca como pago internamente).
+- Procura `WalletTransaction` com `requestId = chargeId`.
+  - Se não encontrar: retorna `{ ok: true, skipped: true }`.
+  - Se `meta.status` já for `'paid'`: retorna `{ ok: true, alreadyProcessed: true }` (idempotência).
+- Em transação do Prisma:
+  - Atualiza `meta.status` para `'paid'` (mantendo o restante do JSON).
+  - Incrementa `Wallet.balanceCents` em `amountCents` da transação.
+
+Após o webhook, o saldo atualizado pode ser visto em:
+- `GET /wallets/:studentId` (para admin/gestor/operador)
+- `GET /auth/me/wallets` (para responsável logado)
+
 ## Migração para Railway
 Como o Flat Controller ainda não resolve o problema do Vercel, vou te preparar a migração para Railway que é a solução definitiva.
 
