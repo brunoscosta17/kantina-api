@@ -3,7 +3,11 @@ import { PixService } from '../wallet/pix.service';
 import { PrismaService } from '../prisma.service';
 
 interface PixWebhookDto {
-  chargeId: string;
+  chargeId?: string;
+  // Payload de webhook Pix padrão Efí segue o modelo do Bacen,
+  // com um array "pix" contendo objetos que possuem um txid.
+  pix?: Array<{ txid?: string; [key: string]: any }>;
+  [key: string]: any;
 }
 
 @Controller('wallets')
@@ -21,9 +25,18 @@ export class PixWebhookController {
       throw new UnauthorizedException('Invalid Pix webhook secret');
     }
 
-    const { chargeId } = body;
+    let chargeId = body.chargeId;
+
+    // Suporte ao payload de webhook Pix da Efí (array pix[0].txid)
+    if (!chargeId && Array.isArray(body.pix) && body.pix.length > 0) {
+      const firstPix = body.pix[0];
+      if (firstPix && typeof firstPix.txid === 'string') {
+        chargeId = firstPix.txid;
+      }
+    }
+
     if (!chargeId) {
-      throw new BadRequestException('chargeId is required');
+      throw new BadRequestException('chargeId or pix[0].txid is required');
     }
 
     await this.pix.confirmPixPayment(chargeId);

@@ -6,3 +6,4 @@ coverage/
 .env.*
 .prisma/
 env.run.yaml
+/certs
