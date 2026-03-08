@@ -130,7 +130,7 @@ export class PixService {
           transaction_amount: numValue,
           description: `Recarga carteira aluno ${studentId}`,
           payment_method_id: 'pix',
-          payer: { email: `student_${studentId.replace(/-/g, '')}@kantina.local` },
+          payer: { email: `kantina.test.${studentId.substring(0, 8)}@gmail.com` },
           external_reference: txid,
         },
         {
