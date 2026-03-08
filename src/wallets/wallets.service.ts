@@ -197,6 +197,10 @@ export class WalletsService {
         else if (t.type === 'DEBIT') label = 'Débito de consumo';
         else if (t.type === 'REFUND') label = 'Estorno';
 
+        if (t.meta && typeof t.meta === 'object' && !Array.isArray(t.meta) && (t.meta as Record<string, any>).status === 'pending') {
+          label += ' (Pendente)';
+        }
+
         return {
           id: t.id,
           type: t.type,
