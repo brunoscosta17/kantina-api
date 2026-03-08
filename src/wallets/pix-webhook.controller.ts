@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
 import { PixService } from '../wallet/pix.service';
 import { PrismaService } from '../prisma.service';
+import axios from 'axios';
 
 interface PixWebhookDto {
   chargeId?: string;
@@ -55,7 +56,6 @@ export class PixWebhookController {
 
     // Validação de status diretamente do Mercado Pago
     if (tx.tenant.pixProvider === 'mercadopago' && tx.tenant.mercadopagoAccessToken) {
-      const axios = require('axios');
       const mpResp = await axios.get(`https://api.mercadopago.com/v1/payments/${chargeId}`, {
         headers: { Authorization: `Bearer ${tx.tenant.mercadopagoAccessToken}` },
         validateStatus: () => true, // não joga erro, valida em seguida

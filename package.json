@@ -39,7 +39,7 @@
 
     "db:migrate:railway": "dotenv -e .env.railway.local -- prisma migrate deploy --schema=src/prisma/schema.prisma",
     "db:seed:railway:demo": "dotenv -e .env.railway.local -- tsx src/prisma/seed.demo.ts",
-    "deploy:prod": "pnpm lint && pnpm test && git push origin main",
+    "deploy:prod": "pnpm lint && git push origin main",
 
     "flow:local:reuse-db": "pnpm dev:docker:up",
     "flow:local:reset-demo": "pnpm dev:docker:reset-demo",

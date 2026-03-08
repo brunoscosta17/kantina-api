@@ -16,7 +16,7 @@ function createEfipayHttpClient(): AxiosInstance {
   let pfx: Buffer;
   try {
     pfx = fs.readFileSync(certPath);
-  } catch (err) {
+  } catch {
     throw new InternalServerErrorException('Failed to read Efipay certificate file');
   }
 
