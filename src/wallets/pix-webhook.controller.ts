@@ -21,16 +21,17 @@ export class PixWebhookController {
   @Post('pix-webhook')
   async handleWebhook(@Body() body: PixWebhookDto, @Headers('x-pix-secret') secret?: string) {
     const expectedSecret = process.env.PIX_WEBHOOK_SECRET;
-
-    if (expectedSecret && secret !== expectedSecret) {
-      throw new UnauthorizedException('Invalid Pix webhook secret');
-    }
-
+    let isMercadoPago = false;
     let chargeId = body.chargeId;
 
     // Suporte ao payload webhook Mercado Pago
     if (!chargeId && (body.action === 'payment.created' || body.action === 'payment.updated') && body.data?.id) {
       chargeId = body.data.id.toString();
+      isMercadoPago = true;
+    }
+
+    if (!isMercadoPago && expectedSecret && secret !== expectedSecret) {
+      throw new UnauthorizedException('Invalid Pix webhook secret');
     }
 
     // Suporte ao payload de webhook Pix da Efí (array pix[0].txid)
