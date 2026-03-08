@@ -27,6 +27,11 @@ export class PixWebhookController {
 
     let chargeId = body.chargeId;
 
+    // Suporte ao payload webhook Mercado Pago
+    if (!chargeId && (body.action === 'payment.created' || body.action === 'payment.updated') && body.data?.id) {
+      chargeId = body.data.id.toString();
+    }
+
     // Suporte ao payload de webhook Pix da Efí (array pix[0].txid)
     if (!chargeId && Array.isArray(body.pix) && body.pix.length > 0) {
       const firstPix = body.pix[0];
@@ -39,15 +44,29 @@ export class PixWebhookController {
       throw new BadRequestException('chargeId or pix[0].txid is required');
     }
 
-    await this.pix.confirmPixPayment(chargeId);
-
     const tx = await this.prisma.walletTransaction.findFirst({
       where: { requestId: chargeId },
+      include: { tenant: true },
     });
 
     if (!tx) {
       return { ok: true, skipped: true };
     }
+
+    // Validação de status diretamente do Mercado Pago
+    if (tx.tenant.pixProvider === 'mercadopago' && tx.tenant.mercadopagoAccessToken) {
+      const axios = require('axios');
+      const mpResp = await axios.get(`https://api.mercadopago.com/v1/payments/${chargeId}`, {
+        headers: { Authorization: `Bearer ${tx.tenant.mercadopagoAccessToken}` },
+        validateStatus: () => true, // não joga erro, valida em seguida
+      });
+      if (mpResp.status !== 200 || mpResp.data.status !== 'approved') {
+        // Ignora webhooks ou atualizações de pagamentos não aprovados
+        return { ok: true, skipped: true, mpStatus: mpResp.data?.status };
+      }
+    }
+
+    await this.pix.confirmPixPayment(chargeId);
 
     if (typeof tx.meta === 'object' && tx.meta !== null && (tx.meta as any).status === 'paid') {
       return { ok: true, alreadyProcessed: true };

@@ -117,11 +117,42 @@ export class PixService {
         status: 'pending',
       };
     } else if (tenant.pixProvider === 'mercadopago') {
-      // Mantém integração mockada para Mercado Pago por enquanto
+      if (!tenant.mercadopagoAccessToken) {
+        throw new InternalServerErrorException('Mercado Pago Access Token não configurado');
+      }
+
+      const txid = 'mp_' + Math.random().toString(36).substring(2, 10) + Date.now();
+      const numValue = valueCents / 100;
+
+      const mpResp = await axios.post(
+        'https://api.mercadopago.com/v1/payments',
+        {
+          transaction_amount: numValue,
+          description: `Recarga carteira aluno ${studentId}`,
+          payment_method_id: 'pix',
+          payer: { email: `student_${studentId.replace(/-/g, '')}@kantina.local` },
+          external_reference: txid,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tenant.mercadopagoAccessToken}`,
+            'X-Idempotency-Key': txid,
+          },
+        }
+      );
+
+      const mpData = mpResp.data;
+      const chargeId = mpData.id ? mpData.id.toString() : txid;
+      
+      const pointOfInteraction = mpData.point_of_interaction?.transaction_data;
+      if (!pointOfInteraction) {
+        throw new InternalServerErrorException('Mercado Pago não retornou dados do Pix');
+      }
+
       return {
-        chargeId: 'mp_' + Math.random().toString(36).substring(2, 10),
-        pixCopiaCola: '00020126...MP',
-        qrCodeImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?data=mp',
+        chargeId,
+        pixCopiaCola: pointOfInteraction.qr_code,
+        qrCodeImageUrl: `data:image/png;base64,${pointOfInteraction.qr_code_base64}`,
         valueCents,
         studentId,
         status: 'pending',
