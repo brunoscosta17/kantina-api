@@ -244,24 +244,27 @@ Acessar:
 👉 https://kantina.app.br (em deploy real)
 👉 http://localhost:3000/docs (modo local)
 
-💸 Recarga de saldo via Pix (mock)
+💸 Recarga de saldo via Pix (Integração Real com Mercado Pago)
 
-Esta versão da API já suporta o fluxo completo de recarga de saldo via Pix em modo **mock** (sem integração real com PSP), com histórico formatado para os diferentes perfis.
+Esta versão da API suporta o fluxo completo de recarga de saldo via Pix com integração real com a API do Mercado Pago, além de suporte a provas de conceito locais. O fluxo inclui geração de QR Code dinâmico, processamento assíncrono via webhooks, *polling* em tempo real no app e sistema de notificações push/in-app.
 
 - Configuração por tenant:
-  - `PATCH /tenants/:tenantId/pix-config` → define `pixProvider`, chaves Pix e `minChargeCents`.
-  - Em produção (Railway), configure também `PIX_WEBHOOK_SECRET` no serviço `kantina-api`; o webhook exigirá o header `x-pix-secret` com esse valor.
+  - `PATCH /tenants/:tenantId/pix-config` → define `pixProvider` (ex: mercadopago), credenciais de produção e `minChargeCents`.
+  - Em produção (Railway), o webhook exige o header `x-pix-secret` preenchido com o valor de `PIX_WEBHOOK_SECRET` para segurança.
 
-- Criação de cobrança Pix:
-  - `POST /wallets/:studentId/pix-charge`
-  - Autenticação: JWT + header `x-tenant` com o código da escola.
-  - Roles: `ADMIN`, `GESTOR`, `OPERADOR`.
-  - Gera um `chargeId`, `pixCopiaCola` e `qrCodeImageUrl` (mock) e registra uma `WalletTransaction` `type="PIX"` com `meta.status='pending'`.
+- Criação de cobrança Pix (`POST /wallets/:studentId/pix-charge`):
+  - Autenticação: JWT + header `x-tenant`. Roles: `RESPONSAVEL` (via app próprio) ou `ADMIN/GESTOR` na versão painel.
+  - O sistema se comunica com a API Oficial do Mercado Pago para gerar a cobrança de transação.
+  - Retorna o `chargeId`, `pixCopiaCola` e `qrCodeImageUrl`. A transação é salva no banco como `pending`.
 
-- Webhook de confirmação:
-  - `POST /wallets/pix-webhook`
-  - Se `PIX_WEBHOOK_SECRET` estiver definido, exige `x-pix-secret` correto.
-  - Marca a transação como `paid` e incrementa `Wallet.balanceCents`.
+- Webhook de confirmação (`POST /wallets/pix-webhook`):
+  - Rota projetada para receber os POSTs do Mercado Pago ou Efí quando o cliente paga o Pix no seu próprio app bancário.
+  - Verifica ativamente a validade na API oficial (`/v1/payments/:id`) para evitar fraudes ou replay attacks.
+  - Ao validar o pagamento (`approved`), a transação muda para `paid`, o saldo é depositado na carteira instantaneamente, e o serviço de **Notificações** dispara avisos para os Pais e para o Operador da Cantina.
+
+- Polling no Frontend:
+  - Enquanto a tela de QRCode está aberta, o aplicativo consome a rota `GET /wallets/transactions/:txId/status` a cada 5 segundos para verificar mudança de estado.
+  - Quando o webhook processa e o status vira `paid`, a tela atualiza na hora para uma mensagem de **Sucesso**, sem precisar que o usuário dê refresh no app.
 
 - Histórico de recargas/movimentações:
   - `GET /wallets/:studentId` (admin/gestor/operador) e `GET /auth/me/wallets` (responsável) retornam:

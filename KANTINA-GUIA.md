@@ -275,84 +275,62 @@ ou
 
 docker compose exec db psql -U postgres -d kantina -c "SELECT code, name FROM \"Tenant\";"
 
-## Fluxo de recarga via Pix (mock)
+## Fluxo de recarga via Pix (Integração Real)
 
-Esta primeira versão da recarga via Pix é **mockada** (sem integração real com PSP), mas já define todas as rotas e contratos que o frontend e a futura integração real vão usar.
+Esta versão da recarga via Pix possui integração real com o **Mercado Pago**, mas já define as abstrações que permitem adicionar outros provedores (como Efí) futuramente.
 
 ### 1. Configurar Pix para o tenant
 
 - Endpoint: `PATCH /tenants/:tenantId/pix-config`
 - Serviço: TenantsService (método `updatePixConfig`)
 - Campos suportados:
-  - `pixProvider` (ex.: `"gerencianet"` ou `"mercadopago"`)
+  - `pixProvider` (`"mercadopago"` ou `"gerencianet"`)
   - `pixKey`
-  - `gerencianetClientId`, `gerencianetClientSecret`
-  - `mercadopagoAccessToken`, `mercadopagoPublicKey`
+  - `mercadopagoAccessToken` (e `PublicKey` opcional)
   - `minChargeCents` (valor mínimo de recarga em centavos)
 
-> Em produção (Railway), configure também `PIX_WEBHOOK_SECRET` no serviço da API. O webhook irá esperar o header `x-pix-secret` com esse valor.
+> Em produção (Railway), configure também `PIX_WEBHOOK_SECRET` no serviço da API. O webhook irá esperar o header `x-pix-secret` com esse valor, exceto em chamadas oficiais originadas do Mercado Pago IPN.
 
 ### 2. Criar cobrança Pix para a carteira do aluno
 
 - Endpoint: `POST /wallets/:studentId/pix-charge`
 - Autenticação: JWT (`Authorization: Bearer <accessToken>`) + `x-tenant` com o código da escola
-- Roles permitidas: `ADMIN`, `GESTOR`, `OPERADOR`
-- Body (TopupDto):
-
-```json
-{
-  "amountCents": 2000,
-  "note": "Recarga via Pix"
-}
-```
+- Roles permitidas: `RESPONSAVEL`, `ADMIN`, `GESTOR`, `OPERADOR`
 
 Fluxo interno:
-- Resolve `tenantId` via `TenantMiddleware` (`x-tenant`).
-- Busca a carteira (`Wallet`) por `(tenantId, studentId)`.
+- Resolve `tenantId` via JWT ou `TenantMiddleware`.
 - Busca o `Tenant` e valida:
   - se `pixProvider` está configurado;
   - se `amountCents >= minChargeCents` (quando definido).
-- Chama `PixService.createPixCharge(...)` (mock), que devolve:
-  - `chargeId`
+- Chama `PixService.createPixCharge(...)`, que bate na API do Mercado Pago e devolve:
+  - `chargeId` (ID oficial da transação no banco original)
   - `pixCopiaCola`
   - `qrCodeImageUrl`
 - Grava uma `WalletTransaction` com:
   - `type = 'PIX'`
-  - `amountCents = amountCents`
   - `meta.status = 'pending'`
-  - `meta.provider = pixProvider`
   - `requestId = chargeId`
-- **Não** altera o saldo ainda (aguarda confirmação do Pix).
+- **Não** altera o saldo ainda (aguarda confirmação assíncrona do Pix).
 
-### 3. Confirmar pagamento Pix (webhook)
+### 3. Confirmar pagamento Pix (webhook e validação)
 
 - Endpoint: `POST /wallets/pix-webhook`
 - Controller dedicado: `PixWebhookController` (sem `JwtAuthGuard`)
-- Segurança:
-  - Se `PIX_WEBHOOK_SECRET` **não** estiver definido: o webhook aceita qualquer chamada (útil em dev/local).
-  - Se `PIX_WEBHOOK_SECRET` estiver definido: a requisição deve enviar o header `x-pix-secret` exatamente com esse valor, caso contrário responde `401 Invalid Pix webhook secret`.
-- Body esperado (mock):
-
-```json
-{
-  "chargeId": "<valor retornado em pix-charge>"
-}
-```
+- O webhook é capaz de parsear notificações do Mercado Pago (Webhooks e IPN).
 
 Fluxo interno:
-- Chama `PixService.confirmPixPayment(chargeId)` (mock: sempre marca como pago internamente).
-- Procura `WalletTransaction` com `requestId = chargeId`.
-  - Se não encontrar: retorna `{ ok: true, skipped: true }`.
-  - Se `meta.status` já for `'paid'`: retorna `{ ok: true, alreadyProcessed: true }` (idempotência).
+- Extrai o `chargeId` do payload dinamicamente.
+- Procura a transação no banco de dados. Verifica na **API do Mercado Pago original** se `status === 'approved'` (medida anti-fraude).
 - Em transação do Prisma:
-  - Atualiza `meta.status` para `'paid'` (mantendo o restante do JSON).
+  - Atualiza `meta.status` para `'paid'`.
   - Incrementa `Wallet.balanceCents` em `amountCents` da transação.
+  - O `NotificationsService` é acionado para criar um push notice (Notification) para a `role` do Operador e para o ID do Responsável.
 
-Após o webhook, o saldo atualizado pode ser visto em:
-- `GET /wallets/:studentId` (para admin/gestor/operador)
-- `GET /auth/me/wallets` (para responsável logado)
+### 4. Polling no Frontend
 
-### 4. Formato de resposta do histórico de recargas/movimentações
+Enquanto o QRCode está na tela, o aplicativo consulta a rota `GET /wallets/transactions/:txId/status`. Assim que o DB refletir o status `'paid'` (ação do webhook), o frontend quebra o cronômetro local e mostra a tela de SUCESSO.
+
+### 5. Formato de resposta do histórico de recargas/movimentações
 
 Tanto o endpoint de carteira administrativa (`GET /wallets/:studentId`) quanto o endpoint do responsável (`GET /auth/me/wallets`) retornam um histórico já formatado, pronto para exibição no frontend.
 
