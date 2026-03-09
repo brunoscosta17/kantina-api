@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -8,6 +9,7 @@ import { WalletsController } from './wallets.controller';
 import { WalletsService } from './wallets.service';
 
 @Module({
+  imports: [NotificationsModule],
   controllers: [WalletsController, PixWebhookController],
   providers: [WalletsService, JwtAuthGuard, RolesGuard, Reflector, PixService],
 })
