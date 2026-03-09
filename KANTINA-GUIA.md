@@ -923,3 +923,19 @@ Ele vai:
 Rodar lint e test localmente.
 Se estiver tudo ok, dar git push origin main.
 A Railway pega o novo commit na main e faz o deploy automaticamente.
+
+## Acesso Simplificado do Aluno (PIN Numérico)
+
+Foi desenvolvido um fluxo muito simples para que as crianças entrem no App da Kantina, chamado **Acesso Simplificado do Aluno**.
+
+### Como Funciona:
+1. **O Código (PIN):** O banco de dados no Postgres possui a coluna `accessCode` na tabela `Student`. A API gera um código único de 6 dígitos automáticos quando a escola (Admin/Gestor) cadastra um aluno.
+2. **Distribuição:** A criança não precisa de e-mail. O pai (Responsável logado no app) acessa a tela de "Ajustes", vê os filhos na lista e lá estará escrito em negrito o **Código de Acesso** gerado para ele. O pai passa esse número para o filho.
+3. **Login do Aluno:** O estudante abre o app, clica na tela inicial em "Acesso do Aluno" e cai numa tela de Pad Numérico (`StudentLoginScreen`), feita especialmente para só deixar digitar números.
+4. **Endpoint:** Na API, temos o `POST /auth/student-login`, que pega o código do aluno e o valida no BD, caso correto emite um `accessToken` com as permissões da Role `ALUNO`.
+
+### Recuperar Códigos de Alunos Antigos (Backfill)
+Caso você já tivesse alunos cadastrados antes no sistema, rode um utilitário exclusivo para injetar os códigos 6 dígitos nele:
+- Se estiver rodando local sem Docker ou na máquina: `npx tsx seed-codes.ts`
+- Se for via painel de Adm ou scripts automáticos, basta acionar a rota: `POST /students/ensure-access-codes`.
+

@@ -296,6 +296,16 @@ Esta versão da API suporta o fluxo completo de recarga de saldo via Pix com int
 
 Com isso, o frontend consegue exibir, para cada perfil, um extrato legível de recargas Pix, recargas manuais, débitos de consumo e estornos.
 
+🎓 Acesso Simplificado do Aluno (PIN de 6 dígitos)
+
+O aplicativo possui um fluxo de login simplificado exclusivo para os Alunos, desenvolvido para facilitar a entrada de crianças e jovens sem a necessidade de e-mails ou senhas complexas:
+
+- **Geração do Código:** Quando um aluno é criado via painel, o backend gera automaticamente um `accessCode` numérico de 6 dígitos (ex: `849201`), que é único no sistema.
+- **Visibilidade:** O Responsável pelo aluno consegue ver esse "Código de Acesso" na tela inicial ou na tela de Ajustes (`SettingsScreen`) do aplicativo.
+- **Entrada no App:** O aluno abre o app e seleciona "Acesso do Aluno". Ele se depara com um teclado numérico onde insere seu PIN (Access Code).
+- **Autenticação:** O app chama o endpoint estático `POST /auth/student-login`, passando o `accessCode`. Se validado, a API retorna um token JWT com a role `ALUNO`, permitindo que ele veja apenas suas informações (saldo, extrato, cardápio).
+- **Popular Banco Atual:** Foi desenvolvido um script de backfill (`seed-codes.ts`) para garantir que os alunos legados também recebam um código válido.
+
 🧾 Licença
 Projeto interno © 2025 — Kantina.app.br
 Desenvolvido por Bruno Costa
