@@ -176,8 +176,16 @@ export class AuthService {
     return wallets.map((w) => {
       const aluno = alunos.find((a) => a.student.id === w.studentId)?.student;
 
-      const transactions = w.transactions.map((t) => {
-        const isCredit = t.type === 'TOPUP' || t.type === 'PIX' || t.type === 'REFUND';
+      const transactions = w.transactions
+        .filter((t) => {
+          if (t.type === 'PIX') {
+            const meta = t.meta as any;
+            return meta?.status === 'paid' || meta?.status === 'approved';
+          }
+          return true;
+        })
+        .map((t) => {
+          const isCredit = t.type === 'TOPUP' || t.type === 'PIX' || t.type === 'REFUND';
         let label = t.type;
         if (t.type === 'TOPUP') label = 'Recarga manual';
         else if (t.type === 'PIX') label = 'Recarga Pix';
