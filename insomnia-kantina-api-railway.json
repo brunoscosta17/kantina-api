@@ -78,7 +78,6 @@
       "environment": {},
       "metaSortKey": 6
     },
-
     {
       "_id": "req_health",
       "_type": "request",
@@ -112,7 +111,6 @@
       ],
       "authentication": {}
     },
-
     {
       "_id": "req_flat_login",
       "_type": "request",
@@ -191,7 +189,6 @@
       ],
       "authentication": {}
     },
-
     {
       "_id": "req_flat_catalog_items",
       "_type": "request",
@@ -228,7 +225,6 @@
       ],
       "authentication": {}
     },
-
     {
       "_id": "req_auth_login",
       "_type": "request",
@@ -353,7 +349,6 @@
       ],
       "authentication": {}
     },
-
     {
       "_id": "req_catalog_api_list",
       "_type": "request",
@@ -377,7 +372,6 @@
       ],
       "authentication": {}
     },
-
     {
       "_id": "req_orders_list",
       "_type": "request",
@@ -478,7 +472,6 @@
       ],
       "authentication": {}
     },
-
     {
       "_id": "req_wallet_get",
       "_type": "request",
@@ -646,6 +639,98 @@
         }
       ],
       "authentication": {}
+    },
+    {
+      "_id": "req_auth_register",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Register (API)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"novo@demo.com\",\n  \"password\": \"senha123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_auth_register"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_auth_register"
+        }
+      ]
+    },
+    {
+      "_id": "req_auth_forgot",
+      "_type": "request",
+      "parentId": "fld_auth_api",
+      "name": "Forgot Password (API)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/forgot-password",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@demo.com\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_auth_forgot"
+        },
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_auth_forgot"
+        }
+      ]
+    },
+    {
+      "_id": "req_tenant_pix_config",
+      "_type": "request",
+      "parentId": "fld_setup",
+      "name": "Configurar Pix do Tenant",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/tenants/{{ _.tenant_code }}/pix-config",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pixProvider\": \"mercadopago\",\n  \"pixKey\": \"00000000000\",\n  \"mercadopagoAccessToken\": \"APP_USR...\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_ct_pix_config"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_pix_config"
+        }
+      ]
+    },
+    {
+      "_id": "req_wallet_tx_status",
+      "_type": "request",
+      "parentId": "fld_wallets",
+      "name": "Transaction Status (Polling)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/wallets/transactions/{{ tx_id }}/status",
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenant_code }}",
+          "id": "pair_tenant_tx_status"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}",
+          "id": "pair_auth_tx_status"
+        }
+      ]
     }
   ]
 }
