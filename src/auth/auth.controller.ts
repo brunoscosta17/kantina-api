@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto';
@@ -22,9 +22,17 @@ export class AuthController {
   @Post('forgot-password')
   forgotPassword(@Req() req: Request, @Body() body: { email: string }) {
     if (!body.email) {
-      throw new Error('E-mail é obrigatório');
+      throw new BadRequestException('E-mail é obrigatório');
     }
     return this.auth.forgotPassword(body.email, req.tenantId!);
+  }
+
+  @Post('student-login')
+  studentLogin(@Body() body: { accessCode: string }) {
+    if (!body.accessCode) {
+      throw new BadRequestException('Código de acesso é obrigatório');
+    }
+    return this.auth.studentLogin(body.accessCode);
   }
 
   @Post('refresh')

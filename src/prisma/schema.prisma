@@ -71,6 +71,7 @@ model Student {
   tenantId  String
   name      String
   classroom String?
+  accessCode String? @unique // PIN de 6 digitos para acesso do aluno
 
   user User?
 

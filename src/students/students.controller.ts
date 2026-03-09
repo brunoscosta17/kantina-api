@@ -32,6 +32,12 @@ export class StudentsController {
     return this.svc.create(req.tenantId!, dto);
   }
 
+  @Post('ensure-access-codes')
+  @Roles('ADMIN', 'GESTOR')
+  ensureAccessCodes() {
+    return this.svc.ensureAccessCodes();
+  }
+
   @Get()
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')
   list(@Req() req: Express.Request, @Query() q: QueryStudentsDto) {

@@ -8,13 +8,23 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async generateAccessCode(): Promise<string> {
+    while (true) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const existing = await this.prisma.student.findUnique({ where: { accessCode: code } });
+      if (!existing) return code;
+    }
+  }
+
   async create(tenantId: string, dto: CreateStudentDto) {
     try {
+      const accessCode = await this.generateAccessCode();
       return await this.prisma.student.create({
         data: {
           tenantId,
           name: dto.name.trim(),
           classroom: dto.classroom?.trim() || null,
+          accessCode,
         },
       });
     } catch (e: any) {
@@ -61,6 +71,7 @@ export class StudentsService {
         id: true,
         name: true,
         classroom: true,
+        accessCode: true,
       },
     });
 
@@ -79,7 +90,7 @@ export class StudentsService {
           name: dto.name?.trim(),
           classroom: dto.classroom === undefined ? undefined : dto.classroom?.trim() || null,
         },
-        select: { id: true, name: true, classroom: true },
+        select: { id: true, name: true, classroom: true, accessCode: true },
       });
     } catch (e: any) {
       if (e?.code === 'P2002') {
@@ -118,5 +129,23 @@ export class StudentsService {
 
     if (!wallet) throw new NotFoundException('Wallet not found');
     return wallet;
+  }
+
+  async ensureAccessCodes() {
+    // Busca todos que não tem
+    const withoutCode = await this.prisma.student.findMany({
+      where: { accessCode: null },
+      select: { id: true },
+    });
+
+    for (const student of withoutCode) {
+      const code = await this.generateAccessCode();
+      await this.prisma.student.update({
+        where: { id: student.id },
+        data: { accessCode: code },
+      });
+    }
+
+    return { updated: withoutCode.length };
   }
 }

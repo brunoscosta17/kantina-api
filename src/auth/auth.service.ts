@@ -65,6 +65,21 @@ export class AuthService {
     return this.issueTokens({ userId: user.id, tenantId, role: user.role });
   }
 
+  async studentLogin(accessCode: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { accessCode },
+      select: { id: true, tenantId: true },
+    });
+
+    if (!student) throw new UnauthorizedException('Código de acesso inválido');
+
+    return this.issueTokens({
+      userId: student.id,
+      tenantId: student.tenantId,
+      role: 'ALUNO',
+    });
+  }
+
   async register(email: string, password: string, tenantId: string) {
     const exists = await this.prisma.user.findFirst({ where: { tenantId, email } });
     if (exists) throw new BadRequestException('Email already in use');
@@ -150,6 +165,7 @@ export class AuthService {
         id: s.id,
         name: s.name,
         classroom: s.classroom,
+        accessCode: s.accessCode,
         tenant: s.tenant ? { name: s.tenant.name, id: s.tenant.id } : undefined,
         wallet: s.Wallet ? { balanceCents: s.Wallet.balanceCents, id: s.Wallet.id } : undefined,
       };
