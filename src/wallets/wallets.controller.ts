@@ -85,8 +85,8 @@ export class WalletsController {
   // Novo endpoint para o Timer / Polling Automático saber se o Pix foi pago
   @Get('transactions/:txId/status')
   async getTransactionStatus(@Param('txId') txId: string) {
-    const tx = await this.prisma.walletTransaction.findUnique({
-      where: { id: txId },
+    const tx = await this.prisma.walletTransaction.findFirst({
+      where: { requestId: txId },
       select: { type: true, meta: true },
     });
     if (!tx) throw new BadRequestException('Transação não encontrada');
