@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Headers, Post, UnauthorizedExcep
 import { PixService } from '../wallet/pix.service';
 import { PrismaService } from '../prisma.service';
 import axios from 'axios';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface PixWebhookDto {
   chargeId?: string;
@@ -16,6 +17,7 @@ export class PixWebhookController {
   constructor(
     private readonly pix: PixService,
     private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   @Post('pix-webhook')
@@ -93,6 +95,30 @@ export class PixWebhookController {
         where: { id: wallet.id },
         data: { balanceCents: { increment: tx.amountCents } },
       });
+
+      const amountStr = (tx.amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const student = await prismaTx.student.findUnique({ where: { id: wallet.studentId } });
+      const studentName = student?.name || 'seu dependente';
+
+      // Notify parent(s)
+      const parents = await prismaTx.studentOnResponsavel.findMany({ where: { studentId: wallet.studentId } });
+      for (const p of parents) {
+        await this.notifications.create(
+          wallet.tenantId,
+          '💸 Pix Confirmado!',
+          `O valor de ${amountStr} foi creditado com sucesso na carteira de ${studentName}.`,
+          p.responsavelId,
+        );
+      }
+
+      // Notify cantina operators
+      await this.notifications.create(
+        wallet.tenantId,
+        'Novo Saldo (Pix)',
+        `A carteira de ${studentName} foi recarregada com ${amountStr} via Pix.`,
+        undefined,
+        'OPERADOR'
+      );
     });
 
     return { ok: true };

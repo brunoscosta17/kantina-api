@@ -20,6 +20,7 @@ import { TenantMiddleware } from './tenant.middleware';
 import { TenantsModule } from './tenants/tenants.module';
 import { TestsModule } from './tests/tests.module';
 import { WalletsModule } from './wallets/wallets.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { WalletsModule } from './wallets/wallets.module';
     ReportsModule,
     StudentsModule,
     TenantsModule,
+    NotificationsModule,
     ThrottlerModule.forRoot([
       {
         ttl: 15 * 60 * 1000,
