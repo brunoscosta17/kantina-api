@@ -19,6 +19,14 @@ export class AuthController {
     return this.auth.register(dto.email, dto.password, req.tenantId!);
   }
 
+  @Post('forgot-password')
+  forgotPassword(@Req() req: Request, @Body() body: { email: string }) {
+    if (!body.email) {
+      throw new Error('E-mail é obrigatório');
+    }
+    return this.auth.forgotPassword(body.email, req.tenantId!);
+  }
+
   @Post('refresh')
   refresh(@Req() req: Request, @Body() dto: RefreshDto) {
     return this.auth.refresh(req.tenantId!, dto.refreshToken);

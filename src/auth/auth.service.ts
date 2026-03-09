@@ -72,12 +72,26 @@ export class AuthService {
     const hash = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
-      data: { tenantId, email, password: hash, role: 'GESTOR' },
+      data: { tenantId, email, password: hash, role: 'RESPONSAVEL' },
       select: { id: true, email: true, role: true },
     });
 
     // se você quiser que register já devolva tokens, troque o return abaixo por issueTokens(...)
     return user;
+  }
+
+  async forgotPassword(email: string, tenantId: string) {
+    const user = await this.prisma.user.findFirst({ where: { tenantId, email } });
+    if (!user) {
+      // Retornar sucesso genérico por segurança (não vazar quais e-mails existem)
+      return { ok: true, message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
+    }
+
+    // Mock: Na vida real usaria AWS SES, SendGrid, Resend, etc.
+    const resetToken = randomBytes(32).toString('hex');
+    console.log(`[MOCK EMAIL] Para: ${email} - Link de recuperação: https://kantina.app.br/reset-password?token=${resetToken}`);
+
+    return { ok: true, message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
   }
 
   async refresh(tenantId: string, refreshToken: string) {
