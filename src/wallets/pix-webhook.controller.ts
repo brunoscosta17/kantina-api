@@ -22,13 +22,21 @@ export class PixWebhookController {
 
   @Post('pix-webhook')
   async handleWebhook(@Body() body: PixWebhookDto, @Headers('x-pix-secret') secret?: string) {
+    console.log('--- PIX WEBHOOK RECEIVED ---', JSON.stringify(body, null, 2));
+
     const expectedSecret = process.env.PIX_WEBHOOK_SECRET;
     let isMercadoPago = false;
     let chargeId = body.chargeId;
 
-    // Suporte ao payload webhook Mercado Pago
-    if (!chargeId && (body.action === 'payment.created' || body.action === 'payment.updated') && body.data?.id) {
+    // Suporte ao payload webhook Mercado Pago (Webhooks)
+    if (!chargeId && (body.type === 'payment' || body.action?.startsWith('payment')) && body.data?.id) {
       chargeId = body.data.id.toString();
+      isMercadoPago = true;
+    }
+    // Suporte ao payload webhook Mercado Pago (IPN)
+    else if (!chargeId && body.topic === 'payment' && body.resource) {
+      const parts = body.resource.split('/');
+      chargeId = parts[parts.length - 1];
       isMercadoPago = true;
     }
 
