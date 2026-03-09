@@ -13,14 +13,14 @@ export class NotificationsController {
 
   @Get()
   async getMyNotifications(@Req() req: Request) {
-    const user = req.user as { id: string; role: string };
-    return this.svc.getMyNotifications(req.tenantId!, user.id, user.role);
+    const user = req.user as { sub: string; role: string };
+    return this.svc.getMyNotifications(req.tenantId!, user.sub, user.role);
   }
 
   @Patch(':id/read')
   async markAsRead(@Req() req: Request, @Param('id') id: string) {
-    const user = req.user as { id: string; role: string };
-    await this.svc.markAsRead(req.tenantId!, id, user.id, user.role);
+    const user = req.user as { sub: string; role: string };
+    await this.svc.markAsRead(req.tenantId!, id, user.sub, user.role);
     return { success: true };
   }
 }
