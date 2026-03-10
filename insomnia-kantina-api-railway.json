@@ -731,6 +731,34 @@
           "id": "pair_auth_tx_status"
         }
       ]
+    },
+    {
+      "_id": "fld_reports",
+      "_type": "request_group",
+      "parentId": "wrk_kantina_api_railway",
+      "name": "Reports",
+      "environment": {},
+      "metaSortKey": 8
+    },
+    {
+      "_id": "req_daily_summary",
+      "_type": "request",
+      "parentId": "fld_reports",
+      "name": "Daily Summary",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/daily-summary",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-tenant",
+          "value": "{{ _.tenantId }}"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      }
     }
   ]
 }

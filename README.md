@@ -142,12 +142,20 @@ Copie o accessToken retornado e insira no campo bearer
 
 Teste as demais rotas autenticadas normalmente
 
+## 👥 Perfis de Acesso (Roles)
+O Kantina API possui um sistema de permissões baseado em papéis (`@Roles`):
+- **ADMIN / GESTOR:** Controle total da operação (Cardápio, Configurações PIX, Relatórios Financeiros, Cancelamento de Pedidos).
+- **OPERADOR:** Focado no Ponto de Venda Rápido (PDV). Tem permissão para visualizar catálogo, iniciar vendas diretas descontando do saldo do aluno e confirmar entrega de pedidos. Não possui acesso a Edições de Catálogo, Configurações de Loja e Relatórios Financeiros.
+- **RESPONSAVEL:** Repõe saldo via PIX e gerencia o consumo dos dependentes (Alunos).
+- **ALUNO:** Realiza login simplificado (Código de 6 dígitos) para ver saldo e gerar pedidos via aplicativo.
+
 📚 Rotas principais (MVP)
 Módulo	Método	Endpoint	Descrição
 Auth	POST	/auth/login	Login e geração de token
 Auth	POST	/auth/register	Cadastro de usuário
 Catalog	GET	/catalog	Lista de produtos
 Orders	GET	/orders	Lista de pedidos
+Reports GET /reports/daily-summary Resumo Financeiro do Dia (apenas ADMIN/GESTOR)
 Wallets	GET	/wallets/:studentId	Consulta saldo
 Wallets	POST	/wallets/:studentId/topup	Adiciona saldo
 Wallets	POST	/wallets/:studentId/debit	Debita valor

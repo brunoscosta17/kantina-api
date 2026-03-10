@@ -27,7 +27,7 @@ export class CatalogAdminController {
   constructor(private readonly svc: CatalogAdminService) {}
 
   @Post()
-  @Roles('ADMIN', 'GESTOR', 'OPERADOR')
+  @Roles('ADMIN', 'GESTOR')
   create(@Req() req: Express.Request, @Body() dto: CreateCatalogItemDto) {
     return this.svc.createItem(req.tenantId!, dto);
   }
@@ -45,7 +45,7 @@ export class CatalogAdminController {
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'GESTOR', 'OPERADOR')
+  @Roles('ADMIN', 'GESTOR')
   update(@Req() req: Express.Request, @Param('id') id: string, @Body() dto: UpdateCatalogItemDto) {
     return this.svc.updateItem(req.tenantId!, id, dto);
   }

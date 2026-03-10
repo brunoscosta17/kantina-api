@@ -22,6 +22,13 @@ export class ReportsController {
     return this.svc.transactions(req.tenantId!, q);
   }
 
+  @Get('daily-summary')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'GESTOR')
+  dailySummary(@Req() req: Request, @Query('date') date?: string) {
+    return this.svc.dailySummary(req.tenantId!, date);
+  }
+
   @Get('orders')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')

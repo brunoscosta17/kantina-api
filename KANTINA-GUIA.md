@@ -64,6 +64,20 @@
 - A API estará em `http://localhost:3000`
 - Use o código de escola gerado pelo seed demo (veja logs do seed)
 
+### 3.1. PDV Rápido (Operador / Admin)
+O aplicativo possui uma tela de "Caixa PDV" desenvolvida para agilidade no balcão:
+1. O Atendente (Operador) pesquisa pelo Nome ou Código do Aluno.
+2. É exibido o Saldo atual do Aluno na tela.
+3. O Operador adiciona itens do Catálogo no Carrinho.
+4. Ao clicar em **FATURAR**, o App dispara as requisições para criar e faturar o pedido, deduzindo do saldo do Aluno instantaneamente e contornando a necessidade do próprio Aluno pedir via celular.
+
+### 3.2. Relatórios de Fechamento (Admin)
+Disponível apenas no perfil `ADMIN` ou `GESTOR`, a tela de **Relatórios** consome o `GET /reports/daily-summary` e fornece o balanço financeiro do dia:
+- Entradas via PIX
+- Entradas em Espécie (Recarga Manual do balcão)
+- Quantidade/Valor total do Consumo Faturado (Débito)
+- Total Integral Retido na escola (soma de todos saldos num momento exato)
+
 ---
 
 ## Ambiente de Produção

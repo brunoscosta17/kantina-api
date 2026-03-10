@@ -65,4 +65,40 @@ export class ReportsService {
 
     return { data: rows, page, pageSize, total, hasNext: page * pageSize < total };
   }
+
+  async dailySummary(tenantId: string, dateStr?: string) {
+    const today = dateStr ? new Date(dateStr) : new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const timeFilter = { gte: today, lt: tomorrow };
+
+    const [pixSum, manualSum, debitSum, balanceSum] = await this.prisma.$transaction([
+      this.prisma.walletTransaction.aggregate({
+        where: { tenantId, type: 'PIX', createdAt: timeFilter },
+        _sum: { amountCents: true },
+      }),
+      this.prisma.walletTransaction.aggregate({
+        where: { tenantId, type: 'TOPUP', createdAt: timeFilter },
+        _sum: { amountCents: true },
+      }),
+      this.prisma.walletTransaction.aggregate({
+        where: { tenantId, type: 'DEBIT', createdAt: timeFilter },
+        _sum: { amountCents: true },
+      }),
+      this.prisma.wallet.aggregate({
+        where: { tenantId },
+        _sum: { balanceCents: true },
+      }),
+    ]);
+
+    return {
+      date: today.toISOString().split('T')[0],
+      pixTotalCents: pixSum._sum.amountCents || 0,
+      manualTotalCents: manualSum._sum.amountCents || 0,
+      consumptionTotalCents: debitSum._sum.amountCents || 0,
+      totalRetainedCents: balanceSum._sum.balanceCents || 0,
+    };
+  }
 }

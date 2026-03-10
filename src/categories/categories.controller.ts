@@ -15,7 +15,7 @@ export class CategoriesController {
   constructor(private readonly svc: CategoriesService) {}
 
   @Post()
-  @Roles('ADMIN', 'GESTOR', 'OPERADOR')
+  @Roles('ADMIN', 'GESTOR')
   create(@Req() req: Express.Request, @Body() dto: CreateCategoryDto) {
     return this.svc.create(req.tenantId!, dto);
   }
@@ -33,7 +33,7 @@ export class CategoriesController {
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'GESTOR', 'OPERADOR')
+  @Roles('ADMIN', 'GESTOR')
   update(@Req() req: Express.Request, @Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.svc.update(req.tenantId!, id, dto);
   }
