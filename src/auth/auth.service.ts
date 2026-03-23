@@ -14,7 +14,9 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService, // access token
   ) {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+    if (process.env.RESEND_API_KEY) {
+      this.resend = new Resend(process.env.RESEND_API_KEY);
+    }
   }
 
   private sha256(token: string) {
@@ -111,29 +113,33 @@ export class AuthService {
     const resetLink = `https://kantina.app.br/reset-password?token=${resetToken}&tid=${tenantId}`;
 
     // Envio real via Resend
-    try {
-      await this.resend.emails.send({
-        from: 'Kantina <noreply@kantina.app.br>',
-        to: [email],
-        subject: 'Recuperação de Senha — Kantina',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Recuperação de Senha</h2>
-            <p>Olá,</p>
-            <p>Recebemos uma solicitação para redefinir sua senha no Kantina.</p>
-            <p>Clique no botão abaixo para prosseguir:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetLink}" style="background: #80B990; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Redefinir Senha</a>
+    if (this.resend) {
+      try {
+        await this.resend.emails.send({
+          from: 'Kantina <noreply@kantina.app.br>',
+          to: [email],
+          subject: 'Recuperação de Senha — Kantina',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Recuperação de Senha</h2>
+              <p>Olá,</p>
+              <p>Recebemos uma solicitação para redefinir sua senha no Kantina.</p>
+              <p>Clique no botão abaixo para prosseguir:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetLink}" style="background: #80B990; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Redefinir Senha</a>
+              </div>
+              <p>Se você não solicitou isso, pode ignorar este e-mail.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="font-size: 12px; color: #999;">Link direto: ${resetLink}</p>
             </div>
-            <p>Se você não solicitou isso, pode ignorar este e-mail.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="font-size: 12px; color: #999;">Link direto: ${resetLink}</p>
-          </div>
-        `
-      });
-      console.log(`[EMAIL] Link enviado para ${email}`);
-    } catch (err) {
-      console.error('Erro ao enviar e-mail de recuperação:', err);
+          `
+        });
+        console.log(`[EMAIL] Link enviado para ${email}`);
+      } catch (err) {
+        console.error('Erro ao enviar e-mail de recuperação:', err);
+      }
+    } else {
+      console.log(`[MOCK EMAIL] Link para ${email}: ${resetLink}`);
     }
 
     return { ok: true, message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
