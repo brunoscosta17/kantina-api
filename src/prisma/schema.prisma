@@ -42,12 +42,13 @@ model Tenant {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  tenantId String
-  email    String
-  password String
-  role     Role
-  isActive Boolean @default(true)
+  id        String   @id @default(uuid())
+  tenantId  String
+  email     String
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  pushToken String? // Token para notificações Expo/Firebase
 
   // FK para Student — precisa ser UNIQUE para 1:1
   studentId String?  @unique
@@ -67,11 +68,12 @@ model User {
 }
 
 model Student {
-  id        String  @id @default(uuid())
-  tenantId  String
-  name      String
-  classroom String?
+  id         String  @id @default(uuid())
+  tenantId   String
+  name       String
+  classroom  String?
   accessCode String? @unique // PIN de 6 digitos para acesso do aluno
+  pushToken  String? // Token para notificações Expo/Firebase
 
   user User?
 
@@ -84,6 +86,29 @@ model Student {
 
   @@unique([tenantId, name, classroom], name: "tenantId_name_classroom")
   @@map("Student")
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  name      String
+  org       String?
+  city      String?
+  contact   String
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@map("Lead")
+}
+
+model Waitlist {
+  id        String   @id @default(uuid())
+  name      String
+  contact   String
+  role      String?
+  city      String?
+  createdAt DateTime @default(now())
+
+  @@map("Waitlist")
 }
 
 model StudentOnResponsavel {

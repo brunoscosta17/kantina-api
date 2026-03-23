@@ -5,8 +5,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CatalogAdminService } from './catalog-admin.service';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
+import { PrismaModule } from '../prisma.module';
 
 @Module({
+  imports: [PrismaModule],
   controllers: [CatalogController],
   providers: [CatalogService, JwtAuthGuard, CatalogAdminService, RolesGuard, Reflector],
 })

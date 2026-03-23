@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -53,6 +54,12 @@ export class StudentsController {
   @Put(':id')
   @Roles('ADMIN', 'GESTOR', 'OPERADOR')
   update(@Req() req: Express.Request, @Param('id') id: string, @Body() dto: UpdateStudentDto) {
+    return this.svc.update(req.tenantId!, id, dto);
+  }
+
+  @Patch(':id')
+  @Roles('ADMIN', 'GESTOR', 'OPERADOR')
+  patch(@Req() req: Express.Request, @Param('id') id: string, @Body() dto: UpdateStudentDto) {
     return this.svc.update(req.tenantId!, id, dto);
   }
 

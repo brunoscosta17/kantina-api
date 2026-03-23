@@ -1,3 +1,1 @@
-export * from './pix.service';
-export * from './wallet.controller';
-
+export * from '../wallets/pix.service';

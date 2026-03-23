@@ -1,8 +1,9 @@
 import { BadRequestException, Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
-import { PixService } from '../wallet/pix.service';
+import { PixService } from './pix.service';
 import { PrismaService } from '../prisma.service';
 import axios from 'axios';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../events/events.gateway';
 
 interface PixWebhookDto {
   chargeId?: string;
@@ -18,6 +19,7 @@ export class PixWebhookController {
     private readonly pix: PixService,
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly events: EventsGateway,
   ) {}
 
   @Post('pix-webhook')
@@ -127,6 +129,14 @@ export class PixWebhookController {
         undefined,
         'OPERADOR'
       );
+
+      // Emit WebSocket event
+      this.events.emitPixPaid(chargeId, {
+        tenantId: wallet.tenantId,
+        studentId: wallet.studentId,
+        amountCents: tx.amountCents,
+        status: 'paid',
+      });
     });
 
     return { ok: true };

@@ -21,6 +21,9 @@ import { TenantsModule } from './tenants/tenants.module';
 import { TestsModule } from './tests/tests.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { EventsModule } from './events/events.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { NotificationsModule } from './notifications/notifications.module';
     StudentsModule,
     TenantsModule,
     NotificationsModule,
+    EventsModule,
+    OnboardingModule,
+    UsersModule,
     ThrottlerModule.forRoot([
       {
         ttl: 15 * 60 * 1000,

@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma.service';
-import { PixService } from '../wallet/pix.service';
+import { PixService } from './pix.service';
 import { MoneyDto } from './dto/money.dto';
 import { WalletsService } from './wallets.service';
 

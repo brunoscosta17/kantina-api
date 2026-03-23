@@ -36,11 +36,9 @@
     "seed:local": "tsx src/prisma/seed.ts",
     "vercel-build": "prisma generate --schema=src/prisma/schema.prisma && nest build",
     "migrate:env": "pnpm dlx dotenv-cli -e .env -- prisma migrate dev --name add-responsavel-aluno-relation --schema=src/prisma/schema.prisma",
-
     "db:migrate:railway": "dotenv -e .env.railway.local -- prisma migrate deploy --schema=src/prisma/schema.prisma",
     "db:seed:railway:demo": "dotenv -e .env.railway.local -- tsx src/prisma/seed.demo.ts",
     "deploy:prod": "pnpm lint && git push origin main",
-
     "flow:local:reuse-db": "pnpm dev:docker:up",
     "flow:local:reset-demo": "pnpm dev:docker:reset-demo",
     "flow:local:schema": "pnpm db:migrate:dev && pnpm dev:docker:reset-demo",
@@ -53,13 +51,16 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.17",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/throttler": "^6.4.0",
+    "@nestjs/websockets": "^11.1.17",
     "@prisma/client": "^6.17.0",
     "axios": "^1.7.9",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "expo-server-sdk": "^6.1.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
@@ -67,7 +68,9 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.9.4",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.3",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
